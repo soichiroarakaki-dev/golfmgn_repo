@@ -124,7 +124,7 @@ export default function ProfilePage() {
         {/* ナビゲーション */}
         <div className="bg-white rounded-lg p-4 shadow-lg">
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/home')}
             className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg text-sm"
           >
             🏠 ホームに戻る
