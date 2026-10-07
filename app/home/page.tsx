@@ -26,9 +26,6 @@ export default function HomePage() {
         <div className="text-center mb-6 mt-8">
           <h1 className="text-4xl font-bold text-green-700 mb-2">⛳ なんくるナビさ</h1>
           <p className="text-gray-600 text-sm">ゴルフコース管理支援アプリ</p>
-          <div className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold mt-2">
-            ✓ タイトル修正
-          </div>
         </div>
 
         <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
