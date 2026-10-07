@@ -7,6 +7,8 @@ export default function HomePage() {
   const router = useRouter();
   const [prefecture, setPrefecture] = useState('沖縄');
   const [course, setCourse] = useState('沖縄カントリークラブ');
+  const [selectedHole, setSelectedHole] = useState<number | null>(null);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
 
   const courses: Record<string, string[]> = {
     '東京': ['東京GC', 'トウキョウGC'],
@@ -20,14 +22,37 @@ export default function HomePage() {
     setCourse(courses[newPref]?.[0] || '');
   };
 
+  const handlePlayStart = () => {
+    // ランダムにホール選択（1-18）
+    const randomHole = Math.floor(Math.random() * 18) + 1;
+    setSelectedHole(randomHole);
+    setShowAnnouncement(true);
+
+    // 2秒後にゲーム画面へ遷移
+    setTimeout(() => {
+      router.push(`/game?prefecture=${prefecture}&course_id=okinawa_cc&hole=${randomHole}`);
+    }, 2000);
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-100 to-blue-100 p-4">
       <div className="max-w-md mx-auto">
+        {/* ヘッダー */}
         <div className="text-center mb-6 mt-8">
           <h1 className="text-4xl font-bold text-green-700 mb-2">⛳ なんくるナビさ</h1>
           <p className="text-gray-600 text-sm">ゴルフコース管理支援アプリ</p>
         </div>
 
+        {/* アナウンス */}
+        {showAnnouncement && (
+          <div className="bg-green-100 border-2 border-green-600 rounded-lg p-6 mb-4 text-center animate-pulse">
+            <div className="text-lg font-bold text-green-700 mb-2">🎯 ホール選択中</div>
+            <div className="text-3xl font-bold text-green-800 mb-2">ホール {selectedHole}</div>
+            <div className="text-sm text-green-600">ゲーム画面へ移行します...</div>
+          </div>
+        )}
+
+        {/* ユーザー情報 */}
         <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="bg-gray-100 p-3 rounded-lg">
@@ -45,6 +70,7 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* メニュー */}
         <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
           <h2 className="text-sm font-semibold text-gray-800 mb-3">🎮 メニュー</h2>
 
@@ -90,6 +116,7 @@ export default function HomePage() {
           </button>
         </div>
 
+        {/* クイックスタート */}
         <div className="bg-white rounded-lg p-4 shadow-lg">
           <h2 className="text-sm font-semibold text-gray-800 mb-3">🚀 クイックスタート</h2>
           <div className="text-xs text-gray-700 mb-3 leading-relaxed">
@@ -99,8 +126,8 @@ export default function HomePage() {
           </div>
 
           <button
-            onClick={() => router.push('/game')}
-            className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm mb-2"
+            onClick={handlePlayStart}
+            className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm mb-2 transition transform hover:scale-105"
           >
             ⛳ プレイ開始
           </button>
@@ -109,6 +136,17 @@ export default function HomePage() {
           </button>
         </div>
       </div>
+
+      {/* アニメーション CSS */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        .animate-pulse {
+          animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
     </main>
   );
 }
