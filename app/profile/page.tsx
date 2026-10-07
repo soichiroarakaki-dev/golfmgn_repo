@@ -15,6 +15,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [userName, setUserName] = useState('新垣宗一郎');
   const [handicap, setHandicap] = useState(9);
+  const [isEditing, setIsEditing] = useState(false);
   const [clubs, setClubs] = useState<Club[]>([
     { id: '1w', name: 'ドライバー', code: '1W', yardage: 230, enabled: true },
     { id: '3w', name: '3番ウッド', code: '3W', yardage: 200, enabled: true },
@@ -34,8 +35,13 @@ export default function ProfilePage() {
     setClubs(clubs.map(c => c.id === id ? { ...c, enabled: !c.enabled } : c));
   };
 
+  const updateYardage = (id: string, newYardage: number) => {
+    setClubs(clubs.map(c => c.id === id ? { ...c, yardage: newYardage } : c));
+  };
+
   const handleSave = () => {
-    alert('✅ ユーザー情報を保存しました');
+    alert('✅ ユーザー情報とクラブセットを保存しました');
+    setIsEditing(false);
   };
 
   return (
@@ -81,9 +87,6 @@ export default function ProfilePage() {
         {/* マイクラブセット */}
         <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
           <h2 className="text-sm font-semibold text-gray-800 mb-2">🏌️ マイクラブセット</h2>
-          <div className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold mb-3">
-            ✓ トグルスイッチUI
-          </div>
 
           {/* クラブテーブル */}
           <table className="w-full text-xs mb-3">
@@ -91,7 +94,18 @@ export default function ProfilePage() {
               {clubs.map((club) => (
                 <tr key={club.id} className="border-b border-gray-200">
                   <td className="py-2 font-medium text-gray-800">{club.name} ({club.code})</td>
-                  <td className="py-2 text-right text-gray-600">{club.yardage}y</td>
+                  <td className="py-2 text-right">
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={club.yardage}
+                        onChange={(e) => updateYardage(club.id, Number(e.target.value))}
+                        className="w-16 px-2 py-1 border border-gray-300 rounded text-xs"
+                      />
+                    ) : (
+                      <span>{club.yardage}y</span>
+                    )}
+                  </td>
                   <td className="py-2 text-center">
                     <button
                       onClick={() => toggleClub(club.id)}
@@ -113,12 +127,26 @@ export default function ProfilePage() {
 
           <div className="text-xs text-gray-500 mb-3">全12本中12本表示</div>
 
-          <button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm mb-2">
-            ➕ クラブを追加
-          </button>
-          <button className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg text-sm">
-            ✏️ 編集
-          </button>
+          <div className="flex gap-2">
+            <button className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
+              ➕ 追加
+            </button>
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg text-sm"
+            >
+              {isEditing ? '✓ 完了' : '✏️ 編集'}
+            </button>
+          </div>
+
+          {isEditing && (
+            <button
+              onClick={handleSave}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm mt-2"
+            >
+              ✅ 保存
+            </button>
+          )}
         </div>
 
         {/* ナビゲーション */}

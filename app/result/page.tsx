@@ -3,10 +3,35 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
+interface Comment {
+  id: string;
+  userName: string;
+  selectedClub: string;
+  content: string;
+  createdAt: string;
+}
+
 export default function ResultPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [comment, setComment] = useState('');
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([
+    {
+      id: '1',
+      userName: 'ユーザーA',
+      selectedClub: 'ドライバー',
+      content: 'このホールはドライバーが最適。350人以上が選択している。',
+      createdAt: '2026-10-07',
+    },
+    {
+      id: '2',
+      userName: 'ユーザーB',
+      selectedClub: 'ドライバー',
+      content: 'ティーショットではドライバーの距離が活きる。',
+      createdAt: '2026-10-06',
+    },
+  ]);
 
   const holeNumber = searchParams.get('hole') || '3';
   const selectedClub = searchParams.get('club') || 'ドライバー';
@@ -18,8 +43,18 @@ export default function ResultPage() {
   ];
 
   const handleSaveComment = () => {
-    alert('✅ コメントを保存しました');
-    setComment('');
+    if (comment.trim()) {
+      const newComment: Comment = {
+        id: String(comments.length + 1),
+        userName: '新垣宗一郎',
+        selectedClub: selectedClub,
+        content: comment,
+        createdAt: new Date().toISOString().split('T')[0],
+      };
+      setComments([newComment, ...comments]);
+      setComment('');
+      alert('✅ コメントを保存しました');
+    }
   };
 
   return (
@@ -47,8 +82,8 @@ export default function ResultPage() {
           </div>
         </div>
 
-        {/* クラブ選択結果（上に移動） */}
-        <div className="bg-white rounded-lg p-4 shadow-lg mb-4 border-t border-gray-200">
+        {/* クラブ選択結果 */}
+        <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
           <h2 className="text-sm font-semibold text-gray-800 mb-3">📈 クラブ選択結果</h2>
           <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
             総選択数: 1,613人
@@ -80,7 +115,7 @@ export default function ResultPage() {
           ))}
         </div>
 
-        {/* コメント入力枠（下に移動） */}
+        {/* コメント入力枠 */}
         <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
           <h2 className="text-sm font-semibold text-gray-800 mb-2">💬 コメント入力</h2>
           <div className="mb-3">
@@ -108,10 +143,47 @@ export default function ResultPage() {
           >
             💾 保存
           </button>
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
-            📜 一覧表示
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm"
+          >
+            📜 {showComments ? 'コメント非表示' : 'コメント一覧'}
           </button>
         </div>
+
+        {/* コメント一覧表示 */}
+        {showComments && (
+          <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
+            <h2 className="text-sm font-semibold text-gray-800 mb-3">💬 コメント一覧</h2>
+            {comments.length === 0 ? (
+              <div style={{ fontSize: '12px', color: '#999', textAlign: 'center' }}>
+                コメントがまだありません
+              </div>
+            ) : (
+              comments.map((c) => (
+                <div
+                  key={c.id}
+                  style={{
+                    background: '#f9fafb',
+                    padding: '12px',
+                    borderRadius: '6px',
+                    marginBottom: '8px',
+                    fontSize: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <strong>{c.userName}</strong>
+                    <span style={{ color: '#999', fontSize: '10px' }}>{c.createdAt}</span>
+                  </div>
+                  <div style={{ color: '#666', marginBottom: '4px' }}>
+                    選択: <strong>{c.selectedClub}</strong>
+                  </div>
+                  <div style={{ color: '#333', lineHeight: '1.5' }}>{c.content}</div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
         {/* ナビゲーション */}
         <div className="bg-white rounded-lg p-4 shadow-lg">
