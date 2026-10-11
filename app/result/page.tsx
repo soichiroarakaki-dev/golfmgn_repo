@@ -86,29 +86,33 @@ export default function ResultPage() {
         <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
           <h2 className="text-sm font-semibold text-gray-800 mb-3">📈 クラブ選択結果</h2>
           <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
-            総選択数: 1,613人
+            総選択数: {clubStats[0].total.toLocaleString()}人
           </div>
 
           {clubStats.map((stat) => (
-            <div key={stat.name} style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div key={stat.name} style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                 <div style={{ width: '80px', fontWeight: '500' }}>{stat.name}</div>
-                <div style={{ flex: 1, height: '20px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div
-                    style={{
-                      height: '100%',
-                      background: '#16a34a',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontSize: '10px',
-                      fontWeight: '600',
-                      width: `${(stat.count / stat.total) * 100}%`,
-                    }}
-                  >
-                    {Math.round((stat.count / stat.total) * 100)}%
-                  </div>
+                <div style={{ fontSize: '11px', color: '#999', minWidth: '50px' }}>
+                  {stat.count.toLocaleString()}人
+                </div>
+              </div>
+              <div style={{ flex: 1, height: '20px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+                <div
+                  style={{
+                    height: '100%',
+                    background: '#16a34a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '10px',
+                    fontWeight: '600',
+                    width: `${(stat.count / stat.total) * 100}%`,
+                    minWidth: '40px',
+                  }}
+                >
+                  {Math.round((stat.count / stat.total) * 100)}%
                 </div>
               </div>
             </div>
