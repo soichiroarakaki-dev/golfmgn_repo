@@ -37,9 +37,9 @@ export default function ResultPage() {
   const selectedClub = searchParams.get('club') || 'ドライバー';
 
   const clubStats = [
-    { name: 'ドライバー', count: 350, total: 1613 },
-    { name: '3W', count: 411, total: 1613 },
-    { name: '5W', count: 852, total: 1613 },
+    { name: 'ドライバー', count: 563, total: 1613 },
+    { name: '5番アイアン', count: 548, total: 1613 },
+    { name: 'ウェッジ', count: 502, total: 1613 },
   ];
 
   const handleSaveComment = () => {
@@ -92,7 +92,7 @@ export default function ResultPage() {
           {clubStats.map((stat) => (
             <div key={stat.name} style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <div style={{ width: '80px', fontWeight: '500' }}>{stat.name}</div>
+                <div style={{ width: '100px', fontWeight: '500' }}>{stat.name}</div>
                 <div style={{ fontSize: '11px', color: '#999', minWidth: '50px' }}>
                   {stat.count.toLocaleString()}人
                 </div>
