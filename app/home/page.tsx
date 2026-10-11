@@ -30,7 +30,7 @@ export default function HomePage() {
 
     // 2秒後にゲーム画面へ遷移
     setTimeout(() => {
-      router.push(`/game?prefecture=${prefecture}&course_id=okinawa_cc&hole=${randomHole}`);
+      router.push(`/game?prefecture=${prefecture}&course_id=okinawa-cc&hole=${randomHole}`);
     }, 2000);
   };
 
@@ -82,11 +82,12 @@ export default function HomePage() {
           </button>
 
           <div className="mb-3">
-            <label className="block text-xs text-gray-600 font-medium mb-1">📍 都道府県</label>
+            <label className="block text-xs text-gray-600 font-medium mb-1">📍 都道府県 <span className="text-red-500">*必須</span></label>
             <select
               value={prefecture}
               onChange={(e) => handlePrefectureChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              required
             >
               <option>東京</option>
               <option>大阪</option>
@@ -95,36 +96,23 @@ export default function HomePage() {
             </select>
           </div>
 
-          <div className="mb-3">
-            <label className="block text-xs text-gray-600 font-medium mb-1">⛳ ゴルフ場</label>
+          <div className="mb-4">
+            <label className="block text-xs text-gray-600 font-medium mb-1">⛳ ゴルフ場 <span className="text-red-500">*必須</span></label>
             <select
               value={course}
               onChange={(e) => setCourse(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              required
             >
               {courses[prefecture]?.map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
           </div>
-
-          <button
-            onClick={() => router.push(`/game?prefecture=${prefecture}&course_id=okinawa_cc`)}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm"
-          >
-            🏌️ {course}を選択
-          </button>
         </div>
 
-        {/* クイックスタート */}
-        <div className="bg-white rounded-lg p-4 shadow-lg">
-          <h2 className="text-sm font-semibold text-gray-800 mb-3">🚀 クイックスタート</h2>
-          <div className="text-xs text-gray-700 mb-3 leading-relaxed">
-            <div>✅ ユーザー名とハンディキャップを設定</div>
-            <div>✅ 自分のクラブセットを登録</div>
-            <div>✅ ゴルフ場を選択してプレイ開始</div>
-          </div>
-
+        {/* アクションボタン */}
+        <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
           <button
             onClick={handlePlayStart}
             className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm mb-2 transition transform hover:scale-105"
@@ -134,6 +122,16 @@ export default function HomePage() {
           <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
             📋 ルール確認
           </button>
+        </div>
+
+        {/* クイックスタート */}
+        <div className="bg-white rounded-lg p-4 shadow-lg">
+          <h2 className="text-sm font-semibold text-gray-800 mb-3">🚀 クイックスタート</h2>
+          <div className="text-xs text-gray-700 leading-relaxed">
+            <div>✅ ユーザー名とハンディキャップを設定</div>
+            <div>✅ 自分のクラブセットを登録</div>
+            <div>✅ ゴルフ場を選択してプレイ開始</div>
+          </div>
         </div>
       </div>
 

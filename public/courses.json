@@ -1,0 +1,16 @@
+{
+  "courses": [
+    {
+      "id": "okinawa-cc",
+      "name": "沖縄CC",
+      "prefecture": "沖縄",
+      "holes": 9
+    },
+    {
+      "id": "okinawa-gc",
+      "name": "沖縄GC",
+      "prefecture": "沖縄",
+      "holes": 9
+    }
+  ]
+}

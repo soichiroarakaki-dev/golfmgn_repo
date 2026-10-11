@@ -1,0 +1,26 @@
+{
+  "holes": {
+    "okinawa-cc": [
+      {"hole": 1, "par": 4, "handicap": 5, "length": 390, "wind": "北3m"},
+      {"hole": 2, "par": 3, "handicap": 17, "length": 160, "wind": "北3m"},
+      {"hole": 3, "par": 4, "handicap": 9, "length": 385, "wind": "北3m"},
+      {"hole": 4, "par": 5, "handicap": 1, "length": 545, "wind": "北3m"},
+      {"hole": 5, "par": 4, "handicap": 3, "length": 375, "wind": "北3m"},
+      {"hole": 6, "par": 3, "handicap": 15, "length": 170, "wind": "北3m"},
+      {"hole": 7, "par": 5, "handicap": 7, "length": 520, "wind": "北3m"},
+      {"hole": 8, "par": 4, "handicap": 11, "length": 410, "wind": "北3m"},
+      {"hole": 9, "par": 4, "handicap": 13, "length": 400, "wind": "北3m"}
+    ],
+    "okinawa-gc": [
+      {"hole": 1, "par": 4, "handicap": 6, "length": 400, "wind": "東2m"},
+      {"hole": 2, "par": 5, "handicap": 2, "length": 560, "wind": "東2m"},
+      {"hole": 3, "par": 3, "handicap": 16, "length": 155, "wind": "東2m"},
+      {"hole": 4, "par": 4, "handicap": 8, "length": 395, "wind": "東2m"},
+      {"hole": 5, "par": 4, "handicap": 4, "length": 380, "wind": "東2m"},
+      {"hole": 6, "par": 3, "handicap": 18, "length": 140, "wind": "東2m"},
+      {"hole": 7, "par": 5, "handicap": 6, "length": 530, "wind": "東2m"},
+      {"hole": 8, "par": 4, "handicap": 12, "length": 420, "wind": "東2m"},
+      {"hole": 9, "par": 4, "handicap": 14, "length": 405, "wind": "東2m"}
+    ]
+  }
+}

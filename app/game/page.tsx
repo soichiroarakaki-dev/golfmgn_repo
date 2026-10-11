@@ -37,18 +37,26 @@ export default function GameScreen() {
   ];
 
   const generateProblem = () => {
-    if (!selectedHole) return '';
+    if (!selectedHole) return 'ホール情報を読み込み中...';
 
     return `ホール${selectedHole.hole}のティーショット。Par ${selectedHole.par}。距離${selectedHole.length}yard。HC${selectedHole.handicap}。風は${selectedHole.wind}。あなたなら、どのクラブを選びますか？`;
   };
 
-  // ゴルフコース画像を生成（モック実装）
-  const generateGolfImage = async (hole: Hole) => {
+  const generateGolfImage = async (hole: Hole, golfCourseName?: string) => {
     setImageLoading(true);
     try {
-      // Phase 4: サンプル画像を参照（Stability AI クレジット切れ対応）
-      const sampleImageUrl = '/images/hole-3-sample.jpg';
-      setGolfImage(sampleImageUrl);
+      // ゴルフ場名が指定されていない場合は、URLパラメータから取得
+      const course = golfCourseName || courseId || 'okinawa-cc';
+      
+      // ホール番号を2桁ゼロパディング
+      const holeNumber = String(hole.hole).padStart(2, '0');
+      
+      // 動的なホール画像パスを生成
+      // 例: /images/okinawa-cc/hole01.jpg
+      const courseImageUrl = `/images/${course}/hole${holeNumber}.jpg`;
+      
+      console.log(`Loading image: ${courseImageUrl}`);
+      setGolfImage(courseImageUrl);
     } catch (error) {
       console.error('Error loading image:', error);
       setGolfImage(null);
@@ -57,7 +65,6 @@ export default function GameScreen() {
     }
   };
 
-  // 初期ロード: holes.json を読み込む
   useEffect(() => {
     const loadHoles = async () => {
       try {
@@ -69,8 +76,8 @@ export default function GameScreen() {
           setHoles(courseHoles);
           const randomHole = courseHoles[Math.floor(Math.random() * courseHoles.length)];
           setSelectedHole(randomHole);
-          // 画像生成を開始
-          generateGolfImage(randomHole);
+          // ゴルフ場名をパラメータに渡す
+          generateGolfImage(randomHole, courseId);
         }
       } catch (error) {
         console.error('Failed to load holes:', error);
@@ -84,9 +91,11 @@ export default function GameScreen() {
 
   const handleClubSelect = (clubId: string) => {
     setSelectedClub(clubId);
-    setTimeout(() => {
-      router.push(`/result?club=${clubId}&hole=${selectedHole?.hole}&situation=ティーショット`);
-    }, 300);
+    if (selectedHole) {
+      setTimeout(() => {
+        router.push(`/result?club=${clubId}&hole=${selectedHole?.hole}&situation=ティーショット`);
+      }, 300);
+    }
   };
 
   const handleRandomHole = () => {
@@ -94,68 +103,42 @@ export default function GameScreen() {
       const randomHole = holes[Math.floor(Math.random() * holes.length)];
       setSelectedHole(randomHole);
       setSelectedClub(null);
-      generateGolfImage(randomHole);
+      // ゴルフ場名をパラメータに渡す
+      generateGolfImage(randomHole, courseId || undefined);
     }
   };
 
-  const handleBack = () => {
-    router.push(`/`);
-  };
-
-  if (loading) {
+  if (loading || !selectedHole) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
-        <p className="text-2xl font-bold text-gray-700">ローディング中...</p>
-      </div>
-    );
-  }
-
-  if (!selectedHole) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
-        <p className="text-2xl font-bold text-gray-700">ホールを選択してください</p>
+      <div className="min-h-screen bg-gradient-to-b from-green-100 to-blue-100 flex items-center justify-center">
+        <p className="text-2xl font-bold text-gray-700">ホール情報を読み込み中...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-100 to-blue-100">
-      {/* ヘッダー */}
-      <header className="bg-black/40 backdrop-blur-sm border-b border-white/20">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white drop-shadow-lg">⛳ ホール {selectedHole.hole}</h1>
-          <button onClick={handleBack} className="text-white hover:text-yellow-300 font-bold drop-shadow-lg transition-all">
-            ← 戻る
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-green-100 to-blue-100 p-4">
+      <main className="max-w-2xl mx-auto">
+        {/* ホール情報 */}
+        <div className="bg-white/95 backdrop-blur rounded-3xl shadow-2xl overflow-hidden mb-6 border-4 border-yellow-300">
+          <div className="bg-gradient-to-r from-green-400 to-blue-400 p-6 text-center">
+            <h1 className="text-4xl font-bold text-white mb-2">ホール {selectedHole.hole}</h1>
+            <p className="text-white text-lg">← {Math.ceil(selectedHole.hole / 9) === 1 ? 'アウト' : 'イン'} →</p>
+          </div>
 
-      {/* メインコンテンツ */}
-      <main className="max-w-5xl mx-auto px-4 py-8">
-
-        {/* コース管理問題セクション */}
-        <div className="bg-white rounded-xl shadow-2xl overflow-hidden mb-8 border-4 border-yellow-400">
-
-          {/* ゴルフコース画像 */}
-          <div className="w-full bg-white flex items-center justify-center overflow-hidden relative min-h-96">
+          {/* 画像表示エリア */}
+          <div className="relative bg-gray-100 p-8 flex justify-center items-center min-h-64 border-b-4 border-gray-300">
             {imageLoading ? (
-              <div className="flex flex-col items-center justify-center h-96 gap-4">
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-300 border-t-green-600"></div>
-                <p className="text-gray-600 font-semibold">🎨 ゴルフコース画像を生成中...</p>
-              </div>
+              <p className="text-gray-500 text-lg">🖼️ 画像を読み込み中...</p>
             ) : golfImage ? (
               <img
                 src={golfImage}
-                alt={`Hole ${selectedHole.hole}`}
-                className="w-full h-full object-cover"
-                onError={() => {
-                  console.error('Image failed to load');
-                  setGolfImage(null);
-                }}
+                alt={`ホール${selectedHole.hole}`}
+                className="max-w-full max-h-96 rounded-lg shadow-lg"
               />
             ) : (
-              <div className="flex flex-col items-center justify-center h-96 gap-4 text-gray-500">
-                <p className="text-lg font-semibold">画像生成に失敗しました</p>
+              <div className="text-center">
+                <p className="text-gray-500 text-lg mb-4">画像が読み込まれていません</p>
                 <button
                   onClick={() => selectedHole && generateGolfImage(selectedHole)}
                   className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
