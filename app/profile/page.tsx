@@ -16,6 +16,11 @@ export default function ProfilePage() {
   const [userName, setUserName] = useState('新垣宗一郎');
   const [handicap, setHandicap] = useState(9);
   const [isEditing, setIsEditing] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newClubName, setNewClubName] = useState('');
+  const [newClubCode, setNewClubCode] = useState('');
+  const [newClubYardage, setNewClubYardage] = useState('');
+  const [newClubEnabled, setNewClubEnabled] = useState(true);
   const [clubs, setClubs] = useState<Club[]>([
     { id: '1w', name: 'ドライバー', code: '1W', yardage: 230, enabled: true },
     { id: '3w', name: '3番ウッド', code: '3W', yardage: 200, enabled: true },
@@ -37,6 +42,62 @@ export default function ProfilePage() {
 
   const updateYardage = (id: string, newYardage: number) => {
     setClubs(clubs.map(c => c.id === id ? { ...c, yardage: newYardage } : c));
+  };
+
+  const updateClubName = (id: string, newName: string) => {
+    setClubs(clubs.map(c => c.id === id ? { ...c, name: newName } : c));
+  };
+
+  const updateClubCode = (id: string, newCode: string) => {
+    setClubs(clubs.map(c => c.id === id ? { ...c, code: newCode.toUpperCase() } : c));
+  };
+
+  const moveClubUp = (id: string) => {
+    const index = clubs.findIndex(c => c.id === id);
+    if (index > 0) {
+      const newClubs = [...clubs];
+      [newClubs[index], newClubs[index - 1]] = [newClubs[index - 1], newClubs[index]];
+      setClubs(newClubs);
+    }
+  };
+
+  const moveClubDown = (id: string) => {
+    const index = clubs.findIndex(c => c.id === id);
+    if (index < clubs.length - 1) {
+      const newClubs = [...clubs];
+      [newClubs[index], newClubs[index + 1]] = [newClubs[index + 1], newClubs[index]];
+      setClubs(newClubs);
+    }
+  };
+
+  const deleteClub = (id: string) => {
+    if (confirm('このクラブを削除してもよろしいですか？')) {
+      setClubs(clubs.filter(c => c.id !== id));
+      alert('✅ クラブを削除しました');
+    }
+  };
+
+  const handleAddClub = () => {
+    if (!newClubName.trim() || !newClubCode.trim() || !newClubYardage.trim()) {
+      alert('⚠️ クラブ名、略称名、飛距離をすべて入力してください');
+      return;
+    }
+
+    const newClub: Club = {
+      id: Date.now().toString(),
+      name: newClubName,
+      code: newClubCode.toUpperCase(),
+      yardage: Number(newClubYardage),
+      enabled: newClubEnabled,
+    };
+
+    setClubs([...clubs, newClub]);
+    setNewClubName('');
+    setNewClubCode('');
+    setNewClubYardage('');
+    setNewClubEnabled(true);
+    setShowAddModal(false);
+    alert('✅ クラブを追加しました');
   };
 
   const handleSave = () => {
@@ -89,46 +150,108 @@ export default function ProfilePage() {
           <h2 className="text-sm font-semibold text-gray-800 mb-2">🏌️ マイクラブセット</h2>
 
           {/* クラブテーブル */}
-          <table className="w-full text-xs mb-3">
-            <tbody>
-              {clubs.map((club) => (
-                <tr key={club.id} className="border-b border-gray-200">
-                  <td className="py-2 font-medium text-gray-800">{club.name} ({club.code})</td>
-                  <td className="py-2 text-right">
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        value={club.yardage}
-                        onChange={(e) => updateYardage(club.id, Number(e.target.value))}
-                        className="w-16 px-2 py-1 border border-gray-300 rounded text-xs"
-                      />
-                    ) : (
-                      <span>{club.yardage}y</span>
+          <div className="overflow-x-auto mb-3">
+            <table className="w-full text-xs">
+              <tbody>
+                {clubs.map((club, index) => (
+                  <tr key={club.id} className="border-b border-gray-200">
+                    <td className="py-2 px-1">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={club.name}
+                          onChange={(e) => updateClubName(club.id, e.target.value)}
+                          className="w-20 px-2 py-1 border border-gray-300 rounded text-xs"
+                        />
+                      ) : (
+                        <span className="font-medium text-gray-800">{club.name}</span>
+                      )}
+                    </td>
+                    <td className="py-2 px-1 text-center">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={club.code}
+                          onChange={(e) => updateClubCode(club.id, e.target.value)}
+                          className="w-12 px-2 py-1 border border-gray-300 rounded text-xs text-center"
+                          maxLength="4"
+                        />
+                      ) : (
+                        <span className="text-gray-600">({club.code})</span>
+                      )}
+                    </td>
+                    <td className="py-2 px-1 text-right">
+                      {isEditing ? (
+                        <input
+                          type="number"
+                          value={club.yardage}
+                          onChange={(e) => updateYardage(club.id, Number(e.target.value))}
+                          className="w-14 px-2 py-1 border border-gray-300 rounded text-xs"
+                        />
+                      ) : (
+                        <span>{club.yardage}y</span>
+                      )}
+                    </td>
+                    <td className="py-2 px-1 text-center">
+                      <button
+                        onClick={() => toggleClub(club.id)}
+                        className={`w-10 h-6 rounded-full transition-all ${
+                          club.enabled ? 'bg-green-600' : 'bg-gray-400'
+                        } relative inline-block`}
+                      >
+                        <div
+                          className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all ${
+                            club.enabled ? 'right-0.5' : 'left-0.5'
+                          }`}
+                        />
+                      </button>
+                    </td>
+                    {isEditing && (
+                      <>
+                        <td className="py-2 px-1 text-center">
+                          <button
+                            onClick={() => moveClubUp(club.id)}
+                            disabled={index === 0}
+                            className="text-lg disabled:text-gray-300 hover:text-green-600"
+                            title="上に移動"
+                          >
+                            ↑
+                          </button>
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <button
+                            onClick={() => moveClubDown(club.id)}
+                            disabled={index === clubs.length - 1}
+                            className="text-lg disabled:text-gray-300 hover:text-green-600"
+                            title="下に移動"
+                          >
+                            ↓
+                          </button>
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <button
+                            onClick={() => deleteClub(club.id)}
+                            className="text-red-600 hover:text-red-800 font-bold text-sm"
+                            title="削除"
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      </>
                     )}
-                  </td>
-                  <td className="py-2 text-center">
-                    <button
-                      onClick={() => toggleClub(club.id)}
-                      className={`w-10 h-6 rounded-full transition-all ${
-                        club.enabled ? 'bg-green-600' : 'bg-gray-400'
-                      } relative inline-block`}
-                    >
-                      <div
-                        className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all ${
-                          club.enabled ? 'right-0.5' : 'left-0.5'
-                        }`}
-                      />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <div className="text-xs text-gray-500 mb-3">全12本中12本表示</div>
+          <div className="text-xs text-gray-500 mb-3">全{clubs.length}本中{clubs.length}本表示</div>
 
           <div className="flex gap-2">
-            <button className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm"
+            >
               ➕ 追加
             </button>
             <button
@@ -148,6 +271,87 @@ export default function ProfilePage() {
             </button>
           )}
         </div>
+
+        {/* クラブ追加モーダル */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full">
+              <h2 className="text-lg font-bold text-gray-800 mb-4">➕ クラブを追加</h2>
+
+              <div className="mb-4">
+                <label className="block text-xs text-gray-600 font-medium mb-1">クラブ名 <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={newClubName}
+                  onChange={(e) => setNewClubName(e.target.value)}
+                  placeholder="例: ロングアイアン"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-xs text-gray-600 font-medium mb-1">略称名 <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={newClubCode}
+                  onChange={(e) => setNewClubCode(e.target.value.toUpperCase().slice(0, 4))}
+                  placeholder="例: LI"
+                  maxLength="4"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm uppercase"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-xs text-gray-600 font-medium mb-1">飛距離（ヤード） <span className="text-red-500">*</span></label>
+                <input
+                  type="number"
+                  value={newClubYardage}
+                  onChange={(e) => setNewClubYardage(e.target.value)}
+                  placeholder="例: 175"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-xs text-gray-600 font-medium mb-2">使用可能 (ON/OFF)</label>
+                <button
+                  onClick={() => setNewClubEnabled(!newClubEnabled)}
+                  className={`w-14 h-7 rounded-full transition-all ${
+                    newClubEnabled ? 'bg-green-600' : 'bg-gray-400'
+                  } relative inline-block`}
+                >
+                  <div
+                    className={`absolute top-0.5 w-6 h-6 bg-white rounded-full transition-all ${
+                      newClubEnabled ? 'right-0.5' : 'left-0.5'
+                    }`}
+                  />
+                </button>
+                <span className="ml-2 text-sm text-gray-600">{newClubEnabled ? 'ON' : 'OFF'}</span>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setNewClubName('');
+                    setNewClubCode('');
+                    setNewClubYardage('');
+                    setNewClubEnabled(true);
+                  }}
+                  className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg text-sm"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleAddClub}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg text-sm"
+                >
+                  ✅ 追加
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ナビゲーション */}
         <div className="bg-white rounded-lg p-4 shadow-lg">
