@@ -3,12 +3,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+type ShotType = 'tee' | 'second' | 'approach';
+
 interface Club {
   id: string;
   name: string;
   code: string;
   yardage: number;
   enabled: boolean;
+  shotTypes: ShotType[];  // 新しいフィールド: どのショットで使用可能か
 }
 
 export default function ProfilePage() {
@@ -21,19 +24,20 @@ export default function ProfilePage() {
   const [newClubCode, setNewClubCode] = useState('');
   const [newClubYardage, setNewClubYardage] = useState('');
   const [newClubEnabled, setNewClubEnabled] = useState(true);
+  const [newClubShotTypes, setNewClubShotTypes] = useState<ShotType[]>(['tee', 'second', 'approach']);
   const [clubs, setClubs] = useState<Club[]>([
-    { id: '1w', name: 'ドライバー', code: '1W', yardage: 230, enabled: true },
-    { id: '3w', name: '3番ウッド', code: '3W', yardage: 200, enabled: true },
-    { id: '5w', name: '5番ウッド', code: '5W', yardage: 195, enabled: true },
-    { id: '5ut', name: '5番ユーティリティ', code: '5UT', yardage: 170, enabled: true },
-    { id: '5i', name: '5番アイアン', code: '5I', yardage: 160, enabled: true },
-    { id: '6i', name: '6番アイアン', code: '6I', yardage: 150, enabled: true },
-    { id: '7i', name: '7番アイアン', code: '7I', yardage: 140, enabled: true },
-    { id: '8i', name: '8番アイアン', code: '8I', yardage: 130, enabled: true },
-    { id: '9i', name: '9番アイアン', code: '9I', yardage: 120, enabled: true },
-    { id: 'pw', name: 'ピッチングウェッジ', code: 'PW', yardage: 105, enabled: false },
-    { id: 'sw', name: 'サンドウェッジ', code: 'SW', yardage: 80, enabled: true },
-    { id: 'pt', name: 'パター', code: 'PT', yardage: 0, enabled: true },
+    { id: '1w', name: 'ドライバー', code: '1W', yardage: 230, enabled: true, shotTypes: ['tee'] },
+    { id: '3w', name: '3番ウッド', code: '3W', yardage: 200, enabled: true, shotTypes: ['tee'] },
+    { id: '5w', name: '5番ウッド', code: '5W', yardage: 195, enabled: true, shotTypes: ['tee'] },
+    { id: '5ut', name: '5番ユーティリティ', code: '5UT', yardage: 170, enabled: true, shotTypes: ['tee', 'second'] },
+    { id: '5i', name: '5番アイアン', code: '5I', yardage: 160, enabled: true, shotTypes: ['tee', 'second'] },
+    { id: '6i', name: '6番アイアン', code: '6I', yardage: 150, enabled: true, shotTypes: ['second'] },
+    { id: '7i', name: '7番アイアン', code: '7I', yardage: 140, enabled: true, shotTypes: ['second'] },
+    { id: '8i', name: '8番アイアン', code: '8I', yardage: 130, enabled: true, shotTypes: ['second'] },
+    { id: '9i', name: '9番アイアン', code: '9I', yardage: 120, enabled: true, shotTypes: ['second', 'approach'] },
+    { id: 'pw', name: 'ピッチングウェッジ', code: 'PW', yardage: 105, enabled: false, shotTypes: ['second', 'approach'] },
+    { id: 'sw', name: 'サンドウェッジ', code: 'SW', yardage: 80, enabled: true, shotTypes: ['approach'] },
+    { id: 'pt', name: 'パター', code: 'PT', yardage: 0, enabled: true, shotTypes: ['approach'] },
   ]);
 
   const toggleClub = (id: string) => {
@@ -50,6 +54,18 @@ export default function ProfilePage() {
 
   const updateClubCode = (id: string, newCode: string) => {
     setClubs(clubs.map(c => c.id === id ? { ...c, code: newCode.toUpperCase() } : c));
+  };
+
+  const toggleShotType = (clubId: string, shotType: ShotType) => {
+    setClubs(clubs.map(c => {
+      if (c.id === clubId) {
+        const newShotTypes = c.shotTypes.includes(shotType)
+          ? c.shotTypes.filter(st => st !== shotType)
+          : [...c.shotTypes, shotType];
+        return { ...c, shotTypes: newShotTypes };
+      }
+      return c;
+    }));
   };
 
   const moveClubUp = (id: string) => {
@@ -77,9 +93,23 @@ export default function ProfilePage() {
     }
   };
 
+  const getShotTypeLabel = (shotType: ShotType): string => {
+    const labels: Record<ShotType, string> = {
+      tee: 'ティー',
+      second: 'セカンド',
+      approach: 'アプローチ'
+    };
+    return labels[shotType];
+  };
+
   const handleAddClub = () => {
     if (!newClubName.trim() || !newClubCode.trim() || !newClubYardage.trim()) {
       alert('⚠️ クラブ名、略称名、飛距離をすべて入力してください');
+      return;
+    }
+
+    if (newClubShotTypes.length === 0) {
+      alert('⚠️ 最低1つのショットタイプを選択してください');
       return;
     }
 
@@ -89,6 +119,7 @@ export default function ProfilePage() {
       code: newClubCode.toUpperCase(),
       yardage: Number(newClubYardage),
       enabled: newClubEnabled,
+      shotTypes: newClubShotTypes,
     };
 
     setClubs([...clubs, newClub]);
@@ -96,6 +127,7 @@ export default function ProfilePage() {
     setNewClubCode('');
     setNewClubYardage('');
     setNewClubEnabled(true);
+    setNewClubShotTypes(['tee', 'second', 'approach']);
     setShowAddModal(false);
     alert('✅ クラブを追加しました');
   };
@@ -107,7 +139,7 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-green-100 to-blue-100 p-4">
-      <div className="max-w-md mx-auto">
+      <div className="max-w-2xl mx-auto">
         {/* ヘッダー */}
         <div className="text-center mb-6 mt-4">
           <h1 className="text-3xl font-bold text-green-700 mb-2">⚙️ ユーザー設定</h1>
@@ -152,16 +184,31 @@ export default function ProfilePage() {
           {/* クラブテーブル */}
           <div className="overflow-x-auto mb-3">
             <table className="w-full text-xs">
+              <thead className="border-b-2 border-gray-300 bg-gray-50">
+                <tr>
+                  <th className="text-left py-2 px-1">クラブ</th>
+                  <th className="text-center py-2 px-1">コード</th>
+                  <th className="text-right py-2 px-1">飛距離</th>
+                  <th className="text-center py-2 px-1">状態</th>
+                  <th className="text-center py-2 px-1">ショットタイプ</th>
+                  {isEditing && (
+                    <>
+                      <th className="text-center py-2 px-1">↑↓</th>
+                      <th className="text-center py-2 px-1">削除</th>
+                    </>
+                  )}
+                </tr>
+              </thead>
               <tbody>
                 {clubs.map((club, index) => (
-                  <tr key={club.id} className="border-b border-gray-200">
+                  <tr key={club.id} className="border-b border-gray-200 hover:bg-gray-50">
                     <td className="py-2 px-1">
                       {isEditing ? (
                         <input
                           type="text"
                           value={club.name}
                           onChange={(e) => updateClubName(club.id, e.target.value)}
-                          className="w-20 px-2 py-1 border border-gray-300 rounded text-xs"
+                          className="w-24 px-2 py-1 border border-gray-300 rounded text-xs"
                         />
                       ) : (
                         <span className="font-medium text-gray-800">{club.name}</span>
@@ -206,6 +253,27 @@ export default function ProfilePage() {
                         />
                       </button>
                     </td>
+                    <td className="py-2 px-1 text-center">
+                      {isEditing ? (
+                        <div className="flex flex-wrap gap-1 justify-center">
+                          {(['tee', 'second', 'approach'] as ShotType[]).map((shotType) => (
+                            <label key={shotType} className="flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={club.shotTypes.includes(shotType)}
+                                onChange={() => toggleShotType(club.id, shotType)}
+                                className="w-3 h-3 mr-1"
+                              />
+                              <span className="text-xs">{getShotTypeLabel(shotType)}</span>
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-600">
+                          {club.shotTypes.map(st => getShotTypeLabel(st)).join(', ')}
+                        </span>
+                      )}
+                    </td>
                     {isEditing && (
                       <>
                         <td className="py-2 px-1 text-center">
@@ -217,8 +285,6 @@ export default function ProfilePage() {
                           >
                             ↑
                           </button>
-                        </td>
-                        <td className="py-2 px-1 text-center">
                           <button
                             onClick={() => moveClubDown(club.id)}
                             disabled={index === clubs.length - 1}
@@ -245,7 +311,7 @@ export default function ProfilePage() {
             </table>
           </div>
 
-          <div className="text-xs text-gray-500 mb-3">全{clubs.length}本中{clubs.length}本表示</div>
+          <div className="text-xs text-gray-500 mb-3">全{clubs.length}本中{clubs.filter(c => c.enabled).length}本有効</div>
 
           <div className="flex gap-2">
             <button
@@ -275,7 +341,7 @@ export default function ProfilePage() {
         {/* クラブ追加モーダル */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full">
+            <div className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full max-h-96 overflow-y-auto">
               <h2 className="text-lg font-bold text-gray-800 mb-4">➕ クラブを追加</h2>
 
               <div className="mb-4">
@@ -312,7 +378,7 @@ export default function ProfilePage() {
                 />
               </div>
 
-              <div className="mb-6">
+              <div className="mb-4">
                 <label className="block text-xs text-gray-600 font-medium mb-2">使用可能 (ON/OFF)</label>
                 <button
                   onClick={() => setNewClubEnabled(!newClubEnabled)}
@@ -329,6 +395,29 @@ export default function ProfilePage() {
                 <span className="ml-2 text-sm text-gray-600">{newClubEnabled ? 'ON' : 'OFF'}</span>
               </div>
 
+              <div className="mb-6">
+                <label className="block text-xs text-gray-600 font-medium mb-2">ショットタイプ <span className="text-red-500">*</span></label>
+                <div className="space-y-2 border border-gray-300 rounded-lg p-3 bg-gray-50">
+                  {(['tee', 'second', 'approach'] as ShotType[]).map((shotType) => (
+                    <label key={shotType} className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newClubShotTypes.includes(shotType)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNewClubShotTypes([...newClubShotTypes, shotType]);
+                          } else {
+                            setNewClubShotTypes(newClubShotTypes.filter(st => st !== shotType));
+                          }
+                        }}
+                        className="w-4 h-4 mr-2"
+                      />
+                      <span className="text-sm">{getShotTypeLabel(shotType)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 <button
                   onClick={() => {
@@ -337,6 +426,7 @@ export default function ProfilePage() {
                     setNewClubCode('');
                     setNewClubYardage('');
                     setNewClubEnabled(true);
+                    setNewClubShotTypes(['tee', 'second', 'approach']);
                   }}
                   className="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg text-sm"
                 >
