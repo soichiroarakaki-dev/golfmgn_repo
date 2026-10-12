@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
+type ShotType = 'tee' | 'second' | 'approach';
+
 interface Comment {
   id: string;
   userName: string;
@@ -33,13 +35,39 @@ export default function ResultPage() {
     },
   ]);
 
-  const holeNumber = searchParams.get('hole') || '3';
-  const selectedClub = searchParams.get('club') || 'ドライバー';
+  // URLパラメータから値を取得
+  const holeNumber = searchParams.get('hole') || '1';
+  const par = parseInt(searchParams.get('par') || '4');
+  const length = parseInt(searchParams.get('length') || '400');
+  const shotType = (searchParams.get('shotType') || 'tee') as ShotType;
+  const selectedClub = searchParams.get('selectedClub') || 'Unknown';
+  const yardage = parseInt(searchParams.get('yardage') || '0');
 
+  // ショットタイプラベル
+  const getShotTypeLabel = (type: ShotType): string => {
+    const labels: Record<ShotType, string> = {
+      tee: 'ティーショット',
+      second: 'セカンドショット',
+      approach: 'アプローチショット',
+    };
+    return labels[type];
+  };
+
+  // ショットタイプの説明
+  const getShotTypeDescription = (type: ShotType): string => {
+    const descriptions: Record<ShotType, string> = {
+      tee: 'ティーボックスから打つ1打目。飛距離が重要です。',
+      second: 'グリーンに向かって打つ2打目以降。正確さと距離のバランスが大切。',
+      approach: 'グリーン周辺からの短いショット。ピンに寄せることが目標。',
+    };
+    return descriptions[type];
+  };
+
+  // クラブ選択統計（ダミーデータ）
   const clubStats = [
     { name: 'ドライバー', count: 563, total: 1613 },
     { name: '5番アイアン', count: 548, total: 1613 },
-    { name: 'ウェッジ', count: 502, total: 1613 },
+    { name: selectedClub, count: 502, total: 1613 },
   ];
 
   const handleSaveComment = () => {
@@ -63,28 +91,55 @@ export default function ResultPage() {
         {/* ヘッダー */}
         <div className="text-center mb-6 mt-4">
           <h1 className="text-3xl font-bold text-green-700 mb-2">📊 クラブ選択結果</h1>
-          <p className="text-gray-600 text-sm">ホール分析とコメント</p>
+          <p className="text-gray-600 text-sm">ホール {holeNumber} の分析</p>
         </div>
 
         {/* ホール情報 */}
         <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
           <h2 className="text-sm font-semibold text-gray-800 mb-3">🏌️ ホール情報</h2>
-          <div style={{ fontSize: '12px', textAlign: 'center', color: '#666' }}>
-            <strong>Par 4 / 385y / HC 9 / 北3m</strong>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-green-50 p-2 rounded text-center">
+              <p className="text-xs text-gray-600 font-bold">ホール</p>
+              <p className="text-lg font-bold text-green-700">{holeNumber}</p>
+            </div>
+            <div className="bg-blue-50 p-2 rounded text-center">
+              <p className="text-xs text-gray-600 font-bold">Par</p>
+              <p className="text-lg font-bold text-blue-700">{par}</p>
+            </div>
+            <div className="bg-purple-50 p-2 rounded text-center">
+              <p className="text-xs text-gray-600 font-bold">距離</p>
+              <p className="text-lg font-bold text-purple-700">{length}y</p>
+            </div>
+            <div className="bg-yellow-50 p-2 rounded text-center">
+              <p className="text-xs text-gray-600 font-bold">ショット</p>
+              <p className="text-xs font-bold text-yellow-700">{getShotTypeLabel(shotType)}</p>
+            </div>
           </div>
         </div>
 
+        {/* ショット説明 */}
+        <div className="bg-blue-50 rounded-lg p-4 shadow-lg mb-4 border-l-4 border-blue-500">
+          <h2 className="text-sm font-semibold text-blue-800 mb-2">ℹ️ {getShotTypeLabel(shotType)}</h2>
+          <p className="text-sm text-blue-700 leading-relaxed">
+            {getShotTypeDescription(shotType)}
+          </p>
+        </div>
+
         {/* 選択したショット */}
-        <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
-          <h2 className="text-sm font-semibold text-gray-800 mb-2">選択したショット</h2>
-          <div style={{ fontSize: '13px', fontWeight: '500', color: '#333' }}>
-            {selectedClub} (270y)
+        <div className="bg-white rounded-lg p-4 shadow-lg mb-4 border-l-4 border-green-500">
+          <h2 className="text-sm font-semibold text-gray-800 mb-2">✅ あなたの選択</h2>
+          <div className="bg-gradient-to-r from-green-50 to-green-100 p-3 rounded">
+            <p className="text-2xl font-bold text-green-700 mb-1">{selectedClub}</p>
+            <p className="text-lg text-green-600 font-semibold">{yardage}ヤード</p>
+            <p className="text-xs text-green-600 mt-2">
+              このクラブで {yardage}ヤード進みます
+            </p>
           </div>
         </div>
 
         {/* クラブ選択結果 */}
         <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
-          <h2 className="text-sm font-semibold text-gray-800 mb-3">📈 クラブ選択結果</h2>
+          <h2 className="text-sm font-semibold text-gray-800 mb-3">📈 クラブ選択統計</h2>
           <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
             総選択数: {clubStats[0].total.toLocaleString()}人
           </div>
@@ -101,7 +156,7 @@ export default function ResultPage() {
                 <div
                   style={{
                     height: '100%',
-                    background: '#16a34a',
+                    background: selectedClub === stat.name ? '#16a34a' : '#3b82f6',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
