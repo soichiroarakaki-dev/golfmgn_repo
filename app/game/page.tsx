@@ -42,9 +42,7 @@ export default function GameScreen() {
   const [selectedClub, setSelectedClub] = useState<string | null>(null);
   const [golfImage, setGolfImage] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
-  const [shotNumber, setShotNumber] = useState(1);
-  const [remainingDistance, setRemainingDistance] = useState(0);
-  const [clubPath, setClubPath] = useState<string[]>([]);
+  const [shotType, setShotType] = useState<ShotType>('tee');
   const [userClubs, setUserClubs] = useState<UserClub[]>([
     { id: '1w', name: 'ドライバー', code: '1W', yardage: 230, enabled: true, shotTypes: ['tee'] },
     { id: '3w', name: '3番ウッド', code: '3W', yardage: 200, enabled: true, shotTypes: ['tee'] },
@@ -60,17 +58,8 @@ export default function GameScreen() {
     { id: 'pt', name: 'パター', code: 'PT', yardage: 0, enabled: true, shotTypes: ['approach'] },
   ]);
 
+  // ショットタイプに対応するクラブをフィルタリング
   const getFilteredClubs = (): Club[] => {
-    let shotType: ShotType;
-
-    if (shotNumber === 1) {
-      shotType = 'tee';
-    } else if (remainingDistance <= 20) {
-      shotType = 'approach';
-    } else {
-      shotType = 'second';
-    }
-
     return userClubs
       .filter(c => c.enabled && c.shotTypes.includes(shotType))
       .map(c => ({
@@ -82,6 +71,7 @@ export default function GameScreen() {
       }));
   };
 
+  // クラブIDからアイコンを取得
   const getClubIcon = (clubId: string): string => {
     const iconMap: Record<string, string> = {
       '1w': '🎯', '3w': '🎯', '5w': '🎯',
@@ -91,30 +81,30 @@ export default function GameScreen() {
     return iconMap[clubId] || '🏌️';
   };
 
+  // ショット情報を取得
   const getShotInfo = (): { label: string; description: string } => {
-    if (shotNumber === 1) {
-      return {
-        label: '【ティーショット（1打目）】',
-        description: `残り距離: ${remainingDistance}y`,
-      };
-    } else if (remainingDistance <= 20) {
-      return {
-        label: '【グリーン周り（アプローチ）】',
-        description: `残り距離: ${remainingDistance}y`,
-      };
-    } else {
-      return {
-        label: `【セカンド以降（${shotNumber}打目）】`,
-        description: `残り距離: ${remainingDistance}y`,
-      };
-    }
+    const shotLabels: Record<ShotType, { label: string; description: string }> = {
+      tee: {
+        label: '【ティーショット】',
+        description: 'ティーボックスから打つ。飛距離を最大限に活かしたクラブを選びましょう。',
+      },
+      second: {
+        label: '【セカンドショット】',
+        description: 'ティーショット後の2打目。グリーンに近づくことを目指します。',
+      },
+      approach: {
+        label: '【アプローチショット】',
+        description: 'グリーン周辺からの短いショット。正確さが重要です。',
+      },
+    };
+    return shotLabels[shotType];
   };
 
   const generateProblem = () => {
     if (!selectedHole) return 'ホール情報を読み込み中...';
 
     const shotInfo = getShotInfo();
-    return `ホール${selectedHole.hole}${shotInfo.label}。Par ${selectedHole.par}。距離${selectedHole.length}yard。HC${selectedHole.handicap}。風は${selectedHole.wind}。${shotInfo.description}。あなたなら、どのクラブを選びますか？`;
+    return `ホール${selectedHole.hole}${shotInfo.label}。Par ${selectedHole.par}。距離${selectedHole.length}yard。HC${selectedHole.handicap}。風は${selectedHole.wind}。\n\n${shotInfo.description}\n\nあなたなら、どのクラブを選びますか？`;
   };
 
   const generateGolfImage = async (hole: Hole, golfCourseName?: string) => {
@@ -145,8 +135,12 @@ export default function GameScreen() {
           setHoles(courseHoles);
           const randomHole = courseHoles[Math.floor(Math.random() * courseHoles.length)];
           setSelectedHole(randomHole);
-          setRemainingDistance(randomHole.length);
           generateGolfImage(randomHole, courseId);
+
+          // ショットタイプをランダムに選択
+          const shotTypes: ShotType[] = ['tee', 'second', 'approach'];
+          const randomShotType = shotTypes[Math.floor(Math.random() * shotTypes.length)];
+          setShotType(randomShotType);
         }
       } catch (error) {
         console.error('Failed to load holes:', error);
@@ -164,21 +158,12 @@ export default function GameScreen() {
     if (selectedHole) {
       const selected = userClubs.find(c => c.id === clubId);
       if (selected) {
-        const newClubPath = [...clubPath, selected.code];
-        const newRemainingDistance = Math.max(0, remainingDistance - selected.yardage);
-
-        if (selected.id === 'pt' || newRemainingDistance === 0) {
-          setTimeout(() => {
-            router.push(
-              `/result?hole=${selectedHole.hole}&par=${selectedHole.par}&length=${selectedHole.length}&shotNumber=${shotNumber}&selectedClub=${selected.code}&remainingDistance=${newRemainingDistance}&clubPath=${newClubPath.join(',')}`
-            );
-          }, 300);
-        } else {
-          setShotNumber(shotNumber + 1);
-          setRemainingDistance(newRemainingDistance);
-          setClubPath(newClubPath);
-          setSelectedClub(null);
-        }
+        // 即座に結果画面へ遷移
+        setTimeout(() => {
+          router.push(
+            `/result?hole=${selectedHole.hole}&par=${selectedHole.par}&length=${selectedHole.length}&shotType=${shotType}&selectedClub=${selected.code}&yardage=${selected.yardage}`
+          );
+        }, 300);
       }
     }
   };
@@ -187,11 +172,13 @@ export default function GameScreen() {
     if (holes.length > 0) {
       const randomHole = holes[Math.floor(Math.random() * holes.length)];
       setSelectedHole(randomHole);
-      setShotNumber(1);
-      setRemainingDistance(randomHole.length);
-      setClubPath([]);
       setSelectedClub(null);
       generateGolfImage(randomHole, courseId || undefined);
+
+      // ショットタイプを再度ランダムに選択
+      const shotTypes: ShotType[] = ['tee', 'second', 'approach'];
+      const randomShotType = shotTypes[Math.floor(Math.random() * shotTypes.length)];
+      setShotType(randomShotType);
     }
   };
 
@@ -239,17 +226,10 @@ export default function GameScreen() {
           <div className="p-8">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4">🎯 【コース管理問題】</h2>
-              <p className="text-lg text-gray-800 leading-relaxed font-semibold">
+              <p className="text-lg text-gray-800 leading-relaxed font-semibold whitespace-pre-wrap">
                 {generateProblem()}
               </p>
             </div>
-
-            {clubPath.length > 0 && (
-              <div className="bg-blue-50 p-3 rounded mb-4 border-l-4 border-blue-400">
-                <p className="text-xs text-gray-600 font-bold">📍 クラブ選択履歴</p>
-                <p className="text-sm text-gray-800 font-semibold">{clubPath.join(' → ')}</p>
-              </div>
-            )}
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-6 pt-6 border-t-2 border-gray-200">
               <div className="bg-green-50 p-3 rounded text-center">
@@ -266,7 +246,7 @@ export default function GameScreen() {
               </div>
               <div className="bg-purple-50 p-3 rounded text-center">
                 <p className="text-xs text-gray-600 font-bold">距離</p>
-                <p className="text-xl font-bold text-purple-700">{remainingDistance}y</p>
+                <p className="text-xl font-bold text-purple-700">{selectedHole.length}y</p>
               </div>
               <div className="bg-red-50 p-3 rounded text-center">
                 <p className="text-xs text-gray-600 font-bold">風</p>
