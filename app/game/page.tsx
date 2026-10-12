@@ -58,9 +58,10 @@ export default function GameScreen() {
     { id: 'pt', name: 'パター', code: 'PT', yardage: 0, enabled: true, shotTypes: ['approach'] },
   ]);
 
-  // ショットタイプに対応するクラブをフィルタリング
+  // ショットタイプに対応するクラブをフィルタリングし、ランダムに3つだけ選ぶ
   const getFilteredClubs = (): Club[] => {
-    return userClubs
+    // ショットタイプに対応する全てのクラブを取得
+    const allClubs = userClubs
       .filter(c => c.enabled && c.shotTypes.includes(shotType))
       .map(c => ({
         id: c.id,
@@ -69,6 +70,19 @@ export default function GameScreen() {
         yardage: c.yardage,
         shotTypes: c.shotTypes,
       }));
+
+    // 対応するクラブが3つ以下の場合は全て返す
+    if (allClubs.length <= 3) {
+      return allClubs;
+    }
+
+    // ランダムに3つ選ぶ（Fisher-Yatesシャッフル）
+    const shuffled = [...allClubs];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, 3);
   };
 
   // クラブIDからアイコンを取得
@@ -258,7 +272,7 @@ export default function GameScreen() {
 
         <div className="bg-white/95 backdrop-blur rounded-xl shadow-2xl p-8 mb-6">
           <h3 className="text-2xl font-bold text-gray-800 mb-8 text-center">
-            🎯 あなたなら、どのクラブを選びますか？
+            🎯 3つのクラブから選んでください（ランダム出題）
           </h3>
           
           {filteredClubs.length > 0 ? (
@@ -277,7 +291,6 @@ export default function GameScreen() {
                   <div className="text-6xl mb-4">{club.icon}</div>
                   <p className="text-xl font-bold text-gray-800">{club.label}</p>
                   <p className="text-sm text-blue-600 font-semibold mt-2">{club.yardage}y</p>
-                  <p className="text-xs text-gray-600 mt-2">選択済</p>
                 </button>
               ))}
             </div>
