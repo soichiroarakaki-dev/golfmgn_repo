@@ -205,16 +205,11 @@ export default function GameScreen() {
         <div className="flex gap-2 bg-white/95 rounded-b-3xl shadow-2xl p-2 mb-2">
           {/* 左側: 全体コース図 */}
           <div className="w-1/2 bg-gray-200 p-2 rounded-lg flex items-center justify-center min-h-96">
-            {golfImage ? (
-              <img
-                src={golfImage}
-                alt="全体コース図"
-                className="max-h-full max-w-full rounded-lg shadow-lg object-contain"
-              />
-            ) : (
-              <p className="text-gray-500">コース図を読み込み中...</p>
-            )}
-          </div>
+            <img
+              src={`/courses/hole_${selectedHole.hole}/full.jpg`}
+              alt="全体コース図"
+              className="max-h-full max-w-full rounded-lg shadow-lg object-contain"
+            />
 
           {/* 右側: コンテンツエリア */}
           <div className="w-1/2 flex flex-col gap-2">
