@@ -212,6 +212,7 @@ export default function GameScreen() {
             />
 
           {/* 右側: コンテンツエリア */}
+          </div>
           <div className="w-1/2 flex flex-col gap-2">
             {/* 拡大表示セクション */}
             <div className="flex-1 bg-gray-100 p-2 rounded-lg flex items-center justify-center">
