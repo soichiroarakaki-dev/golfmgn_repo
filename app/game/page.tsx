@@ -60,233 +60,229 @@ export default function GameScreen() {
     { id: 'pt', name: 'パター', code: 'PT', yardage: 0, enabled: true, shotTypes: ['approach'] },
   ]);
 
-  // ショットタイプに対応するクラブをフィルタリングし、ランダムに3つだけ選ぶ
-  const getFilteredClubs = (): Club[] => {
-    // ショットタイプに対応する全てのクラブを取得
-    const allClubs = userClubs
-      .filter(c => c.enabled && c.shotTypes.includes(shotType))
-      .map(c => ({
-        id: c.id,
-        label: `${c.name} (${c.code})`,
-        icon: getClubIcon(c.id),
-        yardage: c.yardage,
-        shotTypes: c.shotTypes,
-      }));
-
-    // 対応するクラブが3つ以下の場合は全て返す
-    if (allClubs.length <= 3) {
-      return allClubs;
-    }
-
-    // ランダムに3つ選ぶ（Fisher-Yatesシャッフル）
-    const shuffled = [...allClubs];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled.slice(0, 3);
+  const clubIcons: { [key: string]: string } = {
+    '1w': '🏌️',
+    '3w': '🏌️',
+    '5w': '🏌️',
+    '5ut': '🏌️',
+    '5i': '🥌',
+    '6i': '🥌',
+    '7i': '🥌',
+    '8i': '🥌',
+    '9i': '🥌',
+    'pw': '⛳',
+    'sw': '⛳',
+    'pt': '🏴',
   };
 
-  // クラブIDからアイコンを取得
-  const getClubIcon = (clubId: string): string => {
-    const iconMap: Record<string, string> = {
-      '1w': '🎯', '3w': '🎯', '5w': '🎯',
-      '5ut': '⛳', '5i': '⛳', '6i': '⛳', '7i': '⛳', '8i': '⛳', '9i': '⛳',
-      'pw': '🏌️', 'sw': '🏌️', 'pt': '⛳',
+  useEffect(() => {
+    const fetchHoles = async () => {
+      try {
+        const response = await fetch('/holes.json');
+        const data = await response.json();
+        const courseHoles = data.holes['okinawa-cc'] || [];
+        setHoles(courseHoles);
+
+        const randomIndex = Math.floor(Math.random() * courseHoles.length);
+        setSelectedHole(courseHoles[randomIndex]);
+      } catch (error) {
+        console.error('ホール情報の取得に失敗:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-    return iconMap[clubId] || '🏌️';
-  };
 
-  // ショット情報を取得
-  const getShotInfo = (): { label: string; description: string } => {
-    const shotLabels: Record<ShotType, { label: string; description: string }> = {
-      tee: {
-        label: '【ティーショット】',
-        description: 'ティーボックスから打つ。飛距離を最大限に活かしたクラブを選びましょう。',
-      },
-      second: {
-        label: '【セカンドショット】',
-        description: 'ティーショット後の2打目。グリーンに近づくことを目指します。',
-      },
-      approach: {
-        label: '【アプローチショット】',
-        description: 'グリーン周辺からの短いショット。正確さが重要です。',
-      },
-    };
-    return shotLabels[shotType];
-  };
+    fetchHoles();
+  }, []);
 
-  const generateProblem = () => {
-    if (!selectedHole) return 'ホール情報を読み込み中...';
+  useEffect(() => {
+    if (selectedHole) {
+      generateGolfImage(selectedHole);
+    }
+  }, [selectedHole]);
 
-    const shotInfo = getShotInfo();
-    return `ホール${selectedHole.hole}${shotInfo.label}。Par ${selectedHole.par}。距離${selectedHole.length}yard。HC${selectedHole.handicap}。風は${selectedHole.wind}。\n\n${shotInfo.description}\n\nあなたなら、どのクラブを選びますか？`;
-  };
-
-  const generateGolfImage = async (hole: Hole, golfCourseName?: string) => {
+  const generateGolfImage = async (hole: Hole) => {
     setImageLoading(true);
     try {
-      const course = golfCourseName || courseId || 'okinawa-cc';
-      const holeNumber = String(hole.hole).padStart(2, '0');
-      const courseImageUrl = `/images/${course}/hole${holeNumber}.jpg`;
-      
-      console.log(`Loading image: ${courseImageUrl}`);
-      setGolfImage(courseImageUrl);
+      const response = await fetch('/api/generate-golf-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hole: hole.hole,
+          par: hole.par,
+          length: hole.length,
+          handicap: hole.handicap,
+          wind: hole.wind,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setGolfImage(data.imageUrl);
+      }
     } catch (error) {
-      console.error('Error loading image:', error);
+      console.error('画像生成エラー:', error);
       setGolfImage(null);
     } finally {
       setImageLoading(false);
     }
   };
 
-  useEffect(() => {
-    const loadHoles = async () => {
-      try {
-        const response = await fetch('/holes.json');
-        const data = await response.json();
+  const generateProblem = (): string => {
+    if (!selectedHole) return '';
 
-        if (courseId && data.holes[courseId]) {
-          const courseHoles = data.holes[courseId];
-          setHoles(courseHoles);
-          const randomHole = courseHoles[Math.floor(Math.random() * courseHoles.length)];
-          setSelectedHole(randomHole);
-          generateGolfImage(randomHole, courseId);
+    const shotInfo = {
+      tee: { label: '【ティーショット】', description: 'ティーボックスから打つ。飛距離を最大限に活かしたクラブを選びましょう。' },
+      second: { label: '【セカンドショット】', description: 'グリーンに向けてアプローチ。正確性を重視したクラブを選びましょう。' },
+      approach: { label: '【アプローチショット】', description: 'グリーン周辺からの短いショット。ピンに寄せるクラブを選びましょう。' },
+    }[shotType];
 
-          // ショットタイプをランダムに選択
-          const shotTypes: ShotType[] = ['tee', 'second', 'approach'];
-          const randomShotType = shotTypes[Math.floor(Math.random() * shotTypes.length)];
-          setShotType(randomShotType);
-        }
-      } catch (error) {
-        console.error('Failed to load holes:', error);
-      } finally {
-        setLoading(false);
+    return `ホール${selectedHole.hole}${shotInfo.label}。Par ${selectedHole.par}。距離${selectedHole.length}yard。HC${selectedHole.handicap}。風は${selectedHole.wind}。\n\n${shotInfo.description}\n\nあなたなら、どのクラブを選びますか？`;
+  };
+
+  const getDisplayImage = (): string => {
+    if (!selectedHole) return '';
+    const holeNum = selectedHole.hole;
+    const par = selectedHole.par;
+
+    if (par === 3 || par === 4) {
+      // 2分割（上段/下段）
+      return shotType === 'tee'
+        ? `/courses/hole_${holeNum}/lower.jpg`
+        : `/courses/hole_${holeNum}/upper.jpg`;
+    }
+
+    if (par === 5) {
+      // 3分割（上段/中段/下段）
+      switch (shotType) {
+        case 'tee':
+          return `/courses/hole_${holeNum}/lower.jpg`;
+        case 'second':
+          return `/courses/hole_${holeNum}/middle.jpg`;
+        case 'approach':
+          return `/courses/hole_${holeNum}/upper.jpg`;
       }
-    };
+    }
 
-    loadHoles();
-  }, [courseId, prefecture]);
+    return '';
+  };
 
   const handleClubSelect = (clubId: string) => {
     setSelectedClub(clubId);
-    
-    if (selectedHole) {
-      const selected = userClubs.find(c => c.id === clubId);
-      if (selected) {
-        // 即座に結果画面へ遷移
-        setTimeout(() => {
-          router.push(
-            `/result?hole=${selectedHole.hole}&par=${selectedHole.par}&length=${selectedHole.length}&shotType=${shotType}&selectedClub=${selected.code}&yardage=${selected.yardage}`
-          );
-        }, 300);
-      }
-    }
   };
 
-  const handleRandomHole = () => {
+  const handleSelectNewHole = () => {
     if (holes.length > 0) {
-      const randomHole = holes[Math.floor(Math.random() * holes.length)];
-      setSelectedHole(randomHole);
+      const randomIndex = Math.floor(Math.random() * holes.length);
+      setSelectedHole(holes[randomIndex]);
       setSelectedClub(null);
-      generateGolfImage(randomHole, courseId || undefined);
-
-      // ショットタイプを再度ランダムに選択
-      const shotTypes: ShotType[] = ['tee', 'second', 'approach'];
-      const randomShotType = shotTypes[Math.floor(Math.random() * shotTypes.length)];
-      setShotType(randomShotType);
+      setShotType('tee');
     }
   };
 
-  const filteredClubs = getFilteredClubs();
+  const filteredClubs = userClubs
+    .filter(c => c.enabled && c.shotTypes.includes(shotType))
+    .slice(0, 3)
+    .map((c, i) => ({
+      ...c,
+      icon: clubIcons[c.id] || '🏌️',
+    }));
 
   if (loading || !selectedHole) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-green-100 to-blue-100 flex items-center justify-center">
-        <p className="text-2xl font-bold text-gray-700">ホール情報を読み込み中...</p>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center">読み込み中...</div>;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-100 to-blue-100 p-4">
-      <main className="max-w-2xl mx-auto">
-        <div className="bg-white/95 backdrop-blur rounded-3xl shadow-2xl overflow-hidden mb-2 border-4 border-yellow-300">
-          <div className="bg-gradient-to-r from-green-400 to-blue-400 p-2 text-center">
-            <h1 className="text-2xl font-bold text-white mb-0">ホール {selectedHole.hole}</h1>
-            <p className="text-white text-sm">← {Math.ceil(selectedHole.hole / 9) === 1 ? 'アウト' : 'イン'} →</p>
-          </div>
+      <main className="max-w-6xl mx-auto">
+        {/* ヘッダー */}
+        <div className="bg-gradient-to-r from-green-400 to-blue-400 p-2 rounded-t-3xl text-center mb-0">
+          <h1 className="text-2xl font-bold text-white mb-0">ホール {selectedHole.hole}</h1>
+          <p className="text-white text-sm">← {Math.ceil(selectedHole.hole / 9) === 1 ? 'アウト' : 'イン'} →</p>
+        </div>
 
-          <div className="relative bg-gray-100 p-2 flex justify-center items-center min-h-64 border-b-4 border-gray-300">
-            {imageLoading ? (
-              <p className="text-gray-500 text-lg">🖼️ 画像を読み込み中...</p>
-            ) : golfImage ? (
+        {/* メインコンテンツ: 2カラムレイアウト */}
+        <div className="flex gap-2 bg-white/95 rounded-b-3xl shadow-2xl p-2 mb-2">
+          {/* 左側: 全体コース図 */}
+          <div className="w-1/2 bg-gray-200 p-2 rounded-lg flex items-center justify-center min-h-96">
+            {golfImage ? (
               <img
                 src={golfImage}
-                alt={`ホール${selectedHole.hole}`}
-                className="max-w-full max-h-96 rounded-lg shadow-lg"
+                alt="全体コース図"
+                className="max-h-full max-w-full rounded-lg shadow-lg object-contain"
               />
             ) : (
-              <div className="text-center">
-                <p className="text-gray-500 text-lg mb-1">画像が読み込まれていません</p>
-                <button
-                  onClick={() => selectedHole && generateGolfImage(selectedHole)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  🔄 再試行
-                </button>
-              </div>
+              <p className="text-gray-500">コース図を読み込み中...</p>
             )}
           </div>
 
-          <div className="p-2">
-            <div className="mb-2">
-              <h2 className="text-xl font-bold text-gray-800 mb-1">🎯 【コース管理問題】</h2>
-              <p className="text-base text-gray-800 leading-none font-semibold whitespace-pre-wrap">
+          {/* 右側: コンテンツエリア */}
+          <div className="w-1/2 flex flex-col gap-2">
+            {/* 拡大表示セクション */}
+            <div className="flex-1 bg-gray-100 p-2 rounded-lg flex items-center justify-center">
+              <img
+                src={getDisplayImage()}
+                alt={`${shotType}セクション`}
+                className="max-h-full max-w-full rounded-lg shadow-lg object-contain"
+              />
+            </div>
+
+            {/* コース管理問題 */}
+            <div className="bg-yellow-50 p-2 rounded-lg border-2 border-yellow-300">
+              <h2 className="text-sm font-bold text-gray-800 mb-0">🎯 【コース管理問題】</h2>
+              <p className="text-xs text-gray-800 leading-none whitespace-pre-wrap font-semibold mt-1">
                 {generateProblem()}
               </p>
             </div>
 
-          </div>
-        </div>
-
-        <div className="bg-white/95 backdrop-blur rounded-xl shadow-2xl p-2 mb-2">
-          <h3 className="text-2xl font-bold text-gray-800 mb-0 text-center">
-            🎯 3つのクラブから選んでください（ランダム出題）
-          </h3>
-          
-          {filteredClubs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {filteredClubs.map((club) => (
+            {/* ショットタイプ選択 */}
+            <div className="flex gap-1 text-xs">
+              {(['tee', 'second', 'approach'] as ShotType[]).map((type) => (
                 <button
-                  key={club.id}
-                  onClick={() => handleClubSelect(club.id)}
-                  disabled={selectedClub === club.id}
-                  className={`p-2 rounded-xl border-4 transition-all transform hover:scale-105 ${
-                    selectedClub === club.id
-                      ? 'border-green-500 bg-gradient-to-b from-green-50 to-green-100 shadow-2xl scale-105'
-                      : 'border-gray-300 bg-gradient-to-b from-gray-50 to-white hover:border-green-400 shadow-lg'
+                  key={type}
+                  onClick={() => setShotType(type)}
+                  className={`flex-1 py-1 px-2 rounded font-bold transition ${
+                    shotType === type
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
                   }`}
                 >
-                  <div className="text-6xl mb-1">{club.icon}</div>
-                  <p className="text-xl font-bold text-gray-800">{club.label}</p>
-                  <p className="text-sm text-blue-600 font-semibold mt-0">{club.yardage}y</p>
+                  {type === 'tee' ? 'TEE' : type === 'second' ? '2nd' : 'APP'}
                 </button>
               ))}
             </div>
-          ) : (
-            <p className="text-center text-gray-500 text-lg">
-              このショットに対応するクラブがありません
-            </p>
-          )}
+          </div>
         </div>
 
-        <button
-          onClick={handleRandomHole}
-          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg text-lg"
-        >
-          🔄 別のホールを選ぶ
-        </button>
+        {/* クラブ選択エリア */}
+        <div className="bg-white/95 rounded-3xl shadow-2xl p-2 mb-2">
+          <h3 className="text-lg font-bold text-gray-800 mb-1 text-center">🎯 3つのクラブから選んでください</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+            {filteredClubs.map((club) => (
+              <button
+                key={club.id}
+                onClick={() => handleClubSelect(club.id)}
+                className={`p-2 rounded-xl border-4 transition ${
+                  selectedClub === club.id
+                    ? 'border-green-500 bg-green-100'
+                    : 'border-gray-300 bg-gray-50 hover:border-green-400'
+                }`}
+              >
+                <div className="text-4xl mb-0">{club.icon}</div>
+                <p className="text-sm font-bold text-gray-800">{club.name}</p>
+                <p className="text-xs text-blue-600">{club.yardage}y</p>
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handleSelectNewHole}
+            className="w-full py-1 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-bold"
+          >
+            🔄 別のホールを選ぶ
+          </button>
+        </div>
       </main>
     </div>
   );
