@@ -221,7 +221,7 @@ export default function ProfilePage() {
                           value={club.code}
                           onChange={(e) => updateClubCode(club.id, e.target.value)}
                           className="w-12 px-2 py-1 border border-gray-300 rounded text-xs text-center"
-                          maxLength="4"
+                          maxLength={4}
                         />
                       ) : (
                         <span className="text-gray-600">({club.code})</span>
@@ -362,7 +362,7 @@ export default function ProfilePage() {
                   value={newClubCode}
                   onChange={(e) => setNewClubCode(e.target.value.toUpperCase().slice(0, 4))}
                   placeholder="例: LI"
-                  maxLength="4"
+                  maxLength={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm uppercase"
                 />
               </div>
