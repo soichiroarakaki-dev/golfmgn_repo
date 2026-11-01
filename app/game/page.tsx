@@ -212,9 +212,9 @@ export default function GameScreen() {
     <div className="min-h-screen bg-gradient-to-b from-green-100 to-blue-100 p-4">
       <main className="max-w-2xl mx-auto">
         <div className="bg-white/95 backdrop-blur rounded-3xl shadow-2xl overflow-hidden mb-2 border-4 border-yellow-300">
-          <div className="bg-gradient-to-r from-green-400 to-blue-400 p-6 text-center">
-            <h1 className="text-4xl font-bold text-white mb-2">ホール {selectedHole.hole}</h1>
-            <p className="text-white text-lg">← {Math.ceil(selectedHole.hole / 9) === 1 ? 'アウト' : 'イン'} →</p>
+          <div className="bg-gradient-to-r from-green-400 to-blue-400 p-2 text-center">
+            <h1 className="text-2xl font-bold text-white mb-0">ホール {selectedHole.hole}</h1>
+            <p className="text-white text-sm">← {Math.ceil(selectedHole.hole / 9) === 1 ? 'アウト' : 'イン'} →</p>
           </div>
 
           <div className="relative bg-gray-100 p-2 flex justify-center items-center min-h-64 border-b-4 border-gray-300">
