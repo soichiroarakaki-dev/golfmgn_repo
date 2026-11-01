@@ -211,13 +211,13 @@ export default function GameScreen() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-100 to-blue-100 p-4">
       <main className="max-w-2xl mx-auto">
-        <div className="bg-white/95 backdrop-blur rounded-3xl shadow-2xl overflow-hidden mb-6 border-4 border-yellow-300">
+        <div className="bg-white/95 backdrop-blur rounded-3xl shadow-2xl overflow-hidden mb-2 border-4 border-yellow-300">
           <div className="bg-gradient-to-r from-green-400 to-blue-400 p-6 text-center">
             <h1 className="text-4xl font-bold text-white mb-2">ホール {selectedHole.hole}</h1>
             <p className="text-white text-lg">← {Math.ceil(selectedHole.hole / 9) === 1 ? 'アウト' : 'イン'} →</p>
           </div>
 
-          <div className="relative bg-gray-100 p-8 flex justify-center items-center min-h-64 border-b-4 border-gray-300">
+          <div className="relative bg-gray-100 p-2 flex justify-center items-center min-h-64 border-b-4 border-gray-300">
             {imageLoading ? (
               <p className="text-gray-500 text-lg">🖼️ 画像を読み込み中...</p>
             ) : golfImage ? (
@@ -228,7 +228,7 @@ export default function GameScreen() {
               />
             ) : (
               <div className="text-center">
-                <p className="text-gray-500 text-lg mb-4">画像が読み込まれていません</p>
+                <p className="text-gray-500 text-lg mb-1">画像が読み込まれていません</p>
                 <button
                   onClick={() => selectedHole && generateGolfImage(selectedHole)}
                   className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -239,60 +239,38 @@ export default function GameScreen() {
             )}
           </div>
 
-          <div className="p-8">
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">🎯 【コース管理問題】</h2>
-              <p className="text-lg text-gray-800 leading-relaxed font-semibold whitespace-pre-wrap">
+          <div className="p-2">
+            <div className="mb-2">
+              <h2 className="text-xl font-bold text-gray-800 mb-1">🎯 【コース管理問題】</h2>
+              <p className="text-base text-gray-800 leading-none font-semibold whitespace-pre-wrap">
                 {generateProblem()}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-6 pt-6 border-t-2 border-gray-200">
-              <div className="bg-green-50 p-3 rounded text-center">
-                <p className="text-xs text-gray-600 font-bold">ホール</p>
-                <p className="text-2xl font-bold text-green-700">{selectedHole.hole}</p>
-              </div>
-              <div className="bg-blue-50 p-3 rounded text-center">
-                <p className="text-xs text-gray-600 font-bold">Par</p>
-                <p className="text-2xl font-bold text-blue-700">{selectedHole.par}</p>
-              </div>
-              <div className="bg-yellow-50 p-3 rounded text-center">
-                <p className="text-xs text-gray-600 font-bold">HC</p>
-                <p className="text-2xl font-bold text-yellow-700">{selectedHole.handicap}</p>
-              </div>
-              <div className="bg-purple-50 p-3 rounded text-center">
-                <p className="text-xs text-gray-600 font-bold">距離</p>
-                <p className="text-xl font-bold text-purple-700">{selectedHole.length}y</p>
-              </div>
-              <div className="bg-red-50 p-3 rounded text-center">
-                <p className="text-xs text-gray-600 font-bold">風</p>
-                <p className="text-lg font-bold text-red-700">{selectedHole.wind}</p>
-              </div>
-            </div>
           </div>
         </div>
 
-        <div className="bg-white/95 backdrop-blur rounded-xl shadow-2xl p-8 mb-6">
-          <h3 className="text-2xl font-bold text-gray-800 mb-8 text-center">
+        <div className="bg-white/95 backdrop-blur rounded-xl shadow-2xl p-2 mb-2">
+          <h3 className="text-2xl font-bold text-gray-800 mb-0 text-center">
             🎯 3つのクラブから選んでください（ランダム出題）
           </h3>
           
           {filteredClubs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {filteredClubs.map((club) => (
                 <button
                   key={club.id}
                   onClick={() => handleClubSelect(club.id)}
                   disabled={selectedClub === club.id}
-                  className={`p-8 rounded-xl border-4 transition-all transform hover:scale-105 ${
+                  className={`p-2 rounded-xl border-4 transition-all transform hover:scale-105 ${
                     selectedClub === club.id
                       ? 'border-green-500 bg-gradient-to-b from-green-50 to-green-100 shadow-2xl scale-105'
                       : 'border-gray-300 bg-gradient-to-b from-gray-50 to-white hover:border-green-400 shadow-lg'
                   }`}
                 >
-                  <div className="text-6xl mb-4">{club.icon}</div>
+                  <div className="text-6xl mb-1">{club.icon}</div>
                   <p className="text-xl font-bold text-gray-800">{club.label}</p>
-                  <p className="text-sm text-blue-600 font-semibold mt-2">{club.yardage}y</p>
+                  <p className="text-sm text-blue-600 font-semibold mt-0">{club.yardage}y</p>
                 </button>
               ))}
             </div>
