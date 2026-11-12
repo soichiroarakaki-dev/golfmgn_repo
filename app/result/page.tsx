@@ -127,8 +127,12 @@ export default function ResultPage() {
   
   const otherClubs = getOtherClubs();
   const clubStats = [
-    { name: selectedClub, count: 502, total: 1613 },
-    ...otherClubs.map(c => ({ ...c, total: 1613 })),
+    { name: selectedClub || 'Unknown', count: 502, total: 1613 },
+    ...otherClubs.map((c, idx) => ({ 
+      name: c.name, 
+      count: 300 - (idx * 50),  // ダミーカウント
+      total: 1613 
+    })),
   ];
 
   const handleSaveComment = () => {
@@ -139,9 +143,6 @@ export default function ResultPage() {
         selectedClub: selectedClub,
         content: comment,
         createdAt: new Date().toISOString().split('T')[0],
-        holeNumber: holeNumber,
-        handicap: par,
-        wind: '南西',
         holeNumber: holeNumber,
         handicap: par,
         wind: '南西',  // ダミーデータ（実装時は実際の風向きを使用）
