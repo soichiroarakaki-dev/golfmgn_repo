@@ -37,12 +37,29 @@ export default function ResultPage() {
     },
   ]);
 
+  // clubId から club 名を取得するマッピング
+  const clubMap: { [key: string]: string } = {
+    '1w': 'ドライバー',
+    '3w': '3番ウッド',
+    '5w': '5番ウッド',
+    '5ut': '5番ユーティリティ',
+    '5i': '5番アイアン',
+    '6i': '6番アイアン',
+    '7i': '7番アイアン',
+    '8i': '8番アイアン',
+    '9i': '9番アイアン',
+    'pw': 'ピッチングウェッジ',
+    'sw': 'サンドウェッジ',
+    'pt': 'パター',
+  };
+
   // URLパラメータから値を取得
   const holeNumber = searchParams.get('hole') || '1';
   const par = parseInt(searchParams.get('par') || '4');
   const length = parseInt(searchParams.get('length') || '400');
   const shotType = (searchParams.get('shotType') || 'tee') as ShotType;
-  const selectedClub = searchParams.get('selectedClub') || 'Unknown';
+  const clubId = searchParams.get('clubId') || 'unknown';
+  const selectedClub = clubMap[clubId] || searchParams.get('selectedClub') || 'Unknown';
   const yardage = parseInt(searchParams.get('yardage') || '0');
 
   // ショットタイプラベル
@@ -65,11 +82,22 @@ export default function ResultPage() {
     return descriptions[type];
   };
 
-  // クラブ選択統計（ダミーデータ）
+  // クラブ選択統計（selectedClub に応じて他のクラブを表示）
+  const getOtherClubs = () => {
+    const allClubs = [
+      { name: 'ドライバー', count: 563 },
+      { name: '3番ウッド', count: 450 },
+      { name: '5番アイアン', count: 548 },
+      { name: '7番アイアン', count: 480 },
+      { name: 'パター', count: 420 },
+    ];
+    return allClubs.filter(c => c.name !== selectedClub).slice(0, 2);
+  };
+  
+  const otherClubs = getOtherClubs();
   const clubStats = [
-    { name: 'ドライバー', count: 563, total: 1613 },
-    { name: '5番アイアン', count: 548, total: 1613 },
     { name: selectedClub, count: 502, total: 1613 },
+    ...otherClubs.map(c => ({ ...c, total: 1613 })),
   ];
 
   const handleSaveComment = () => {
@@ -96,48 +124,7 @@ export default function ResultPage() {
           <p className="text-gray-600 text-sm">ホール {holeNumber} の分析</p>
         </div>
 
-        {/* ホール情報 */}
-        <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
-          <h2 className="text-sm font-semibold text-gray-800 mb-3">🏌️ ホール情報</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-green-50 p-2 rounded text-center">
-              <p className="text-xs text-gray-600 font-bold">ホール</p>
-              <p className="text-lg font-bold text-green-700">{holeNumber}</p>
-            </div>
-            <div className="bg-blue-50 p-2 rounded text-center">
-              <p className="text-xs text-gray-600 font-bold">Par</p>
-              <p className="text-lg font-bold text-blue-700">{par}</p>
-            </div>
-            <div className="bg-purple-50 p-2 rounded text-center">
-              <p className="text-xs text-gray-600 font-bold">距離</p>
-              <p className="text-lg font-bold text-purple-700">{length}y</p>
-            </div>
-            <div className="bg-yellow-50 p-2 rounded text-center">
-              <p className="text-xs text-gray-600 font-bold">ショット</p>
-              <p className="text-xs font-bold text-yellow-700">{getShotTypeLabel(shotType)}</p>
-            </div>
-          </div>
-        </div>
 
-        {/* ショット説明 */}
-        <div className="bg-blue-50 rounded-lg p-4 shadow-lg mb-4 border-l-4 border-blue-500">
-          <h2 className="text-sm font-semibold text-blue-800 mb-2">ℹ️ {getShotTypeLabel(shotType)}</h2>
-          <p className="text-sm text-blue-700 leading-relaxed">
-            {getShotTypeDescription(shotType)}
-          </p>
-        </div>
-
-        {/* 選択したショット */}
-        <div className="bg-white rounded-lg p-4 shadow-lg mb-4 border-l-4 border-green-500">
-          <h2 className="text-sm font-semibold text-gray-800 mb-2">✅ あなたの選択</h2>
-          <div className="bg-gradient-to-r from-green-50 to-green-100 p-3 rounded">
-            <p className="text-2xl font-bold text-green-700 mb-1">{selectedClub}</p>
-            <p className="text-lg text-green-600 font-semibold">{yardage}ヤード</p>
-            <p className="text-xs text-green-600 mt-2">
-              このクラブで {yardage}ヤード進みます
-            </p>
-          </div>
-        </div>
 
         {/* クラブ選択結果 */}
         <div className="bg-white rounded-lg p-4 shadow-lg mb-4">

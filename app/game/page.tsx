@@ -169,6 +169,16 @@ export default function GameScreen() {
 
   const handleClubSelect = (clubId: string) => {
     setSelectedClub(clubId);
+    // クラブ選択後、結果画面に遷移
+    setTimeout(() => {
+      if (selectedHole) {
+        const selectedClubObj = userClubs.find(c => c.id === clubId);
+        const yardage = selectedClubObj?.yardage || 0;
+        router.push(
+          `/result?hole=${selectedHole.hole}&par=${selectedHole.par}&shotType=${shotType}&clubId=${clubId}&yardage=${yardage}`
+        );
+      }
+    }, 500); // アニメーション時間を確保
   };
 
   const handleSelectNewHole = () => {
