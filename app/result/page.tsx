@@ -92,15 +92,37 @@ export default function ResultPage() {
   };
 
   // クラブ選択統計（selectedClub に応じて他のクラブを表示）
+  // ユーザークラブセット（game/page.tsx と同一）
+  interface UserClub {
+    id: string;
+    name: string;
+    code: string;
+    yardage: number;
+    enabled: boolean;
+    shotTypes: ShotType[];
+  }
+
+  const userClubs: UserClub[] = [
+    { id: '1w', name: 'ドライバー', code: '1W', yardage: 230, enabled: true, shotTypes: ['tee'] },
+    { id: '3w', name: '3番ウッド', code: '3W', yardage: 200, enabled: true, shotTypes: ['tee'] },
+    { id: '5w', name: '5番ウッド', code: '5W', yardage: 195, enabled: true, shotTypes: ['tee'] },
+    { id: '5ut', name: '5番ユーティリティ', code: '5UT', yardage: 170, enabled: true, shotTypes: ['tee', 'second'] },
+    { id: '5i', name: '5番アイアン', code: '5I', yardage: 160, enabled: true, shotTypes: ['tee', 'second'] },
+    { id: '6i', name: '6番アイアン', code: '6I', yardage: 150, enabled: true, shotTypes: ['second'] },
+    { id: '7i', name: '7番アイアン', code: '7I', yardage: 140, enabled: true, shotTypes: ['second'] },
+    { id: '8i', name: '8番アイアン', code: '8I', yardage: 130, enabled: true, shotTypes: ['second'] },
+    { id: '9i', name: '9番アイアン', code: '9I', yardage: 120, enabled: true, shotTypes: ['second', 'approach'] },
+    { id: 'pw', name: 'ピッチングウェッジ', code: 'PW', yardage: 105, enabled: false, shotTypes: ['second', 'approach'] },
+    { id: 'sw', name: 'サンドウェッジ', code: 'SW', yardage: 80, enabled: true, shotTypes: ['approach'] },
+    { id: 'pt', name: 'パター', code: 'PT', yardage: 0, enabled: true, shotTypes: ['approach'] },
+  ];
+
+  // クラブ選択統計（shotType に応じてゲーム画面と同じクラブを表示）
   const getOtherClubs = () => {
-    const allClubs = [
-      { name: 'ドライバー', count: 563 },
-      { name: '3番ウッド', count: 450 },
-      { name: '5番アイアン', count: 548 },
-      { name: '7番アイアン', count: 480 },
-      { name: 'パター', count: 420 },
-    ];
-    return allClubs.filter(c => c.name !== selectedClub).slice(0, 2);
+    const filteredClubs = userClubs
+      .filter(c => c.enabled && c.shotTypes.includes(shotType))
+      .slice(0, 3);
+    return filteredClubs.filter(c => c.name !== selectedClub).slice(0, 2);
   };
   
   const otherClubs = getOtherClubs();
