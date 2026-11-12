@@ -13,6 +13,9 @@ interface Comment {
   selectedClub: string;
   content: string;
   createdAt: string;
+  holeNumber?: string;
+  handicap?: number;
+  wind?: string;
 }
 
 export default function ResultPage() {
@@ -27,6 +30,9 @@ export default function ResultPage() {
       selectedClub: 'ドライバー',
       content: 'このホールはドライバーが最適。350人以上が選択している。',
       createdAt: '2026-10-07',
+      holeNumber: '12',
+      handicap: 3,
+      wind: '南東',
     },
     {
       id: '2',
@@ -34,6 +40,9 @@ export default function ResultPage() {
       selectedClub: 'ドライバー',
       content: 'ティーショットではドライバーの距離が活きる。',
       createdAt: '2026-10-06',
+      holeNumber: '12',
+      handicap: 3,
+      wind: '南東',
     },
   ]);
 
@@ -108,6 +117,12 @@ export default function ResultPage() {
         selectedClub: selectedClub,
         content: comment,
         createdAt: new Date().toISOString().split('T')[0],
+        holeNumber: holeNumber,
+        handicap: par,
+        wind: '南西',
+        holeNumber: holeNumber,
+        handicap: par,
+        wind: '南西',  // ダミーデータ（実装時は実際の風向きを使用）
       };
       setComments([newComment, ...comments]);
       setComment('');
@@ -224,6 +239,9 @@ export default function ResultPage() {
                     <span style={{ color: '#999', fontSize: '10px' }}>{c.createdAt}</span>
                   </div>
                   <div style={{ color: '#666', marginBottom: '4px' }}>
+                  <div style={{ color: '#666', marginBottom: '4px', fontSize: '11px' }}>
+                    🏌️ ホール {c.holeNumber} | HC {c.handicap} | 風: {c.wind}
+                  </div>
                     選択: <strong>{c.selectedClub}</strong>
                   </div>
                   <div style={{ color: '#333', lineHeight: '1.5' }}>{c.content}</div>
