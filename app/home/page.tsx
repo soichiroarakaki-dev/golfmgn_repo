@@ -119,7 +119,10 @@ export default function HomePage() {
           >
             ⛳ プレイ開始
           </button>
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm">
+          <button
+            onClick={() => router.push('/rules')}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm"
+          >
             📋 ルール確認
           </button>
         </div>
