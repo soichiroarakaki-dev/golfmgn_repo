@@ -70,6 +70,9 @@ export default function RulesPage() {
     setIsLoading(true);
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      
       const response = await fetch('/api/dify-chat', {
         method: 'POST',
         headers: {
@@ -79,7 +82,10 @@ export default function RulesPage() {
           message: inputValue,
           conversationId: conversationId,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -91,14 +97,18 @@ export default function RulesPage() {
       const assistantMessage: Message = {
         id: data.messageId || `msg_${Date.now()}`,
         type: 'assistant',
-        content: data.answer || 'レスポンスを取得できませんでした。',
+        content: data.answer || 'レスポンスを取得できませんでした',
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-      setConversationId(data.conversationId);
+
+      // conversationId を保存（次のターンで使用）
+      if (data.conversationId) {
+        setConversationId(data.conversationId);
+      }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('メッセージ送信エラー:', error);
       const errorMessage: Message = {
         id: `msg_${Date.now()}`,
         type: 'assistant',
@@ -113,13 +123,13 @@ export default function RulesPage() {
 
   // 音声入力開始
   const handleStartListening = () => {
-    if (recognitionRef.current && !isListening) {
-      setIsListening(true);
+    if (recognitionRef.current) {
       recognitionRef.current.start();
+      setIsListening(true);
     }
   };
 
-  // キーボード送信
+  // Enter キーでメッセージ送信
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -128,111 +138,76 @@ export default function RulesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-green-100 to-blue-100 p-4">
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-green-100 p-4">
       <div className="max-w-2xl mx-auto">
         {/* ヘッダー */}
-        <div className="text-center mb-4 mt-4">
-          <h1 className="text-3xl font-bold text-green-700 mb-2">📋 ルール確認</h1>
-          <p className="text-gray-600 text-sm">ゴルフルールについてご質問ください</p>
+        <div className="bg-gradient-to-r from-blue-500 to-green-500 p-4 rounded-t-3xl text-center mb-0">
+          <h1 className="text-2xl font-bold text-white mb-0">🎯 ルール確認チャット</h1>
+          <p className="text-white text-sm">ゴルフルールや戦略について質問できます</p>
         </div>
 
-        {/* チャットメッセージエリア */}
-        <div className="bg-white rounded-lg p-4 shadow-lg mb-4 h-96 overflow-y-auto">
+        {/* チャット履歴 */}
+        <div className="bg-white/95 rounded-b-3xl shadow-2xl p-4 mb-4 h-96 overflow-y-auto">
           {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-gray-400 text-center">
-                💬 ゴルフのルールについて質問してください。<br />
-                手入力または音声入力でお答えします。
-              </p>
+            <div className="text-center text-gray-500 py-8">
+              <p>🤖 こんにちは！ゴルフルールや戦略について何でもお聞きください</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {messages.map((msg) => (
+            messages.map((msg) => (
+              <div key={msg.id} className={`mb-4 flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  key={msg.id}
-                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`max-w-xs px-4 py-2 rounded-lg ${
+                    msg.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'
+                  }`}
                 >
-                  <div
-                    className={`max-w-xs px-4 py-2 rounded-lg ${
-                      msg.type === 'user'
-                        ? 'bg-blue-500 text-white rounded-br-none'
-                        : 'bg-gray-200 text-gray-800 rounded-bl-none'
-                    }`}
-                  >
-                    <p className="text-sm">{msg.content}</p>
-                    <p className="text-xs mt-1 opacity-70">
-                      {msg.timestamp.toLocaleTimeString('ja-JP', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
+                  <p className="text-sm">{msg.content}</p>
                 </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg rounded-bl-none">
-                    <p className="text-sm">入力中... ⏳</p>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+              </div>
+            ))
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* 入力エリア */}
-        <div className="bg-white rounded-lg p-4 shadow-lg mb-4">
-          <div className="flex gap-2 mb-3">
+        <div className="bg-white/95 rounded-3xl shadow-2xl p-4">
+          <div className="flex gap-2 mb-2">
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="ゴルフのルールについて質問してください..."
-              className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="質問を入力してください..."
+              className="flex-1 p-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm"
               rows={3}
               disabled={isLoading}
             />
           </div>
 
-          {/* ボタン */}
           <div className="flex gap-2">
             <button
               onClick={handleSendMessage}
               disabled={isLoading || !inputValue.trim()}
-              className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition"
+              className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 font-bold"
             >
-              📤 送信
+              {isLoading ? '送信中...' : '📤 送信'}
             </button>
-
             <button
               onClick={handleStartListening}
               disabled={isLoading || isListening}
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
-                isListening
-                  ? 'bg-red-500 text-white'
-                  : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-400'
+              className={`px-4 py-2 rounded-lg font-bold ${
+                isListening ? 'bg-red-500 text-white' : 'bg-green-500 text-white hover:bg-green-600'
               }`}
             >
-              {isListening ? '🎤 記録中...' : '🎤 音声'}
+              {isListening ? '🎙️ 聞取中...' : '🎙️ 音声'}
             </button>
-
             <button
-              onClick={() => router.push('/')}
-              className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition"
+              onClick={() => router.push('/game')}
+              className="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 font-bold"
             >
-              🏠 戻る
+              ← ゲームに戻る
             </button>
           </div>
         </div>
-
-        {/* 会話ID表示（デバッグ用） */}
-        {conversationId && (
-          <div className="text-xs text-gray-500 text-center">
-            会話ID: {conversationId.substring(0, 20)}...
-          </div>
-        )}
       </div>
-    </main>
+    </div>
   );
 }

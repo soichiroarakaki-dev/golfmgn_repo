@@ -17,6 +17,16 @@ export default function HomePage() {
     '沖縄': ['沖縄カントリークラブ', 'サザンリンクスGC'],
   };
 
+  const courseIdMap: Record<string, string> = {
+    '東京GC': 'tokyo-gc',
+    'トウキョウGC': 'tokyo-gc',
+    '大阪GC': 'osaka-gc',
+    'オオサカGC': 'osaka-gc',
+    '福岡GC': 'fukuoka-gc',
+    'サザンリンクスGC': 'southernlinks',
+    '沖縄カントリークラブ': 'okinawa-cc',
+  };
+
   const handlePrefectureChange = (newPref: string) => {
     setPrefecture(newPref);
     setCourse(courses[newPref]?.[0] || '');
@@ -30,7 +40,8 @@ export default function HomePage() {
 
     // 2秒後にゲーム画面へ遷移
     setTimeout(() => {
-      router.push(`/game?prefecture=${prefecture}&course_id=okinawa-cc&hole=${randomHole}`);
+      const courseId = courseIdMap[course] || 'okinawa-cc';
+      router.push(`/game?prefecture=${prefecture}&course_id=${courseId}&hole=${randomHole}`);
     }, 2000);
   };
 
@@ -47,7 +58,6 @@ export default function HomePage() {
         {showAnnouncement && (
           <div className="bg-green-100 border-2 border-green-600 rounded-lg p-6 mb-4 text-center animate-pulse">
             <div className="text-lg font-bold text-green-700 mb-2">🎯 ホール選択中</div>
-            <div className="text-3xl font-bold text-green-800 mb-2">ホール {selectedHole}</div>
             <div className="text-sm text-green-600">ゲーム画面へ移行します...</div>
           </div>
         )}
@@ -137,17 +147,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-
-      {/* アニメーション CSS */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-        .animate-pulse {
-          animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-      `}</style>
     </main>
   );
 }

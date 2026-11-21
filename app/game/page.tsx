@@ -42,8 +42,6 @@ export default function GameScreen() {
   const [selectedHole, setSelectedHole] = useState<Hole | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedClub, setSelectedClub] = useState<string | null>(null);
-  const [golfImage, setGolfImage] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState(false);
   const [shotType, setShotType] = useState<ShotType>('tee');
   const [userClubs, setUserClubs] = useState<UserClub[]>([
     { id: '1w', name: 'ドライバー', code: '1W', yardage: 230, enabled: true, shotTypes: ['tee'] },
@@ -95,38 +93,6 @@ export default function GameScreen() {
     fetchHoles();
   }, []);
 
-  useEffect(() => {
-    if (selectedHole) {
-      generateGolfImage(selectedHole);
-    }
-  }, [selectedHole]);
-
-  const generateGolfImage = async (hole: Hole) => {
-    setImageLoading(true);
-    try {
-      const response = await fetch('/api/generate-golf-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          hole: hole.hole,
-          par: hole.par,
-          length: hole.length,
-          handicap: hole.handicap,
-          wind: hole.wind,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setGolfImage(data.imageUrl);
-      }
-    } catch (error) {
-      console.error('画像生成エラー:', error);
-      setGolfImage(null);
-    } finally {
-      setImageLoading(false);
-    }
-  };
 
   const generateProblem = (): string => {
     if (!selectedHole) return '';
@@ -141,26 +107,31 @@ export default function GameScreen() {
   };
 
   const getDisplayImage = (): string => {
-    if (!selectedHole) return '';
+    if (!selectedHole || !courseId) return '';
     const holeNum = selectedHole.hole;
     const par = selectedHole.par;
 
-    if (par === 3 || par === 4) {
-      // 2分割（上段/下段）
-      return shotType === 'tee'
-        ? `/courses/hole_${holeNum}/lower.jpg`
-        : `/courses/hole_${holeNum}/upper.jpg`;
-    }
-
-    if (par === 5) {
-      // 3分割（上段/中段/下段）
+    // PAR 3の場合
+    if (par === 3) {
       switch (shotType) {
         case 'tee':
-          return `/courses/hole_${holeNum}/lower.jpg`;
+          return `/courses/${courseId}/hole_${holeNum}/lower.png`;
         case 'second':
-          return `/courses/hole_${holeNum}/middle.jpg`;
+          return `/courses/${courseId}/hole_${holeNum}/upper.png`;
         case 'approach':
-          return `/courses/hole_${holeNum}/upper.jpg`;
+          return ''; // APP では何も表示しない
+      }
+    }
+
+    // PAR 4 と PAR 5 の場合（共通）
+    if (par === 4 || par === 5) {
+      switch (shotType) {
+        case 'tee':
+          return `/courses/${courseId}/hole_${holeNum}/lower.png`;
+        case 'second':
+          return `/courses/${courseId}/hole_${holeNum}/middle.png`;
+        case 'approach':
+          return `/courses/${courseId}/hole_${holeNum}/upper.png`;
       }
     }
 
@@ -204,67 +175,72 @@ export default function GameScreen() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-100 to-blue-100 p-4">
-      <main className="max-w-6xl mx-auto">
+      <main className="max-w-2xl mx-auto">
         {/* ヘッダー */}
-        <div className="bg-gradient-to-r from-green-400 to-blue-400 p-2 rounded-t-3xl text-center mb-0">
-          <h1 className="text-2xl font-bold text-white mb-0">ホール {selectedHole.hole}</h1>
-          <p className="text-white text-sm">← {Math.ceil(selectedHole.hole / 9) === 1 ? 'アウト' : 'イン'} →</p>
+        <div className="bg-gradient-to-r from-green-400 to-blue-400 p-2 rounded-t-3xl mb-0 flex items-center justify-between">
+          <button
+            onClick={() => router.push('/home')}
+            className="text-white text-lg hover:bg-white/20 px-3 py-2 rounded-lg transition font-bold"
+            title="ホームに戻る"
+          >
+            ← 戻る
+          </button>
+          <div className="text-center flex-1">
+            <h1 className="text-2xl font-bold text-white mb-0">ホール {selectedHole.hole}</h1>
+            <p className="text-white text-sm">← {Math.ceil(selectedHole.hole / 9) === 1 ? 'アウト' : 'イン'} →</p>
+          </div>
+          <div className="w-20" />
         </div>
 
-        {/* メインコンテンツ: 2カラムレイアウト */}
-        <div className="flex gap-2 bg-white/95 rounded-b-3xl shadow-2xl p-2 mb-2">
-          {/* 左側: 全体コース図 */}
-          <div className="w-1/2 bg-gray-200 p-2 rounded-lg flex items-center justify-center min-h-96">
+        {/* メインコンテンツ */}
+        <div className="bg-white/95 rounded-b-3xl shadow-2xl p-4 mb-2">
+          {/* 画像表示エリア */}
+          <div className="bg-gray-100 p-4 rounded-lg flex items-center justify-center min-h-80 mb-4">
             <img
-              src={`/courses/hole_${selectedHole.hole}/full.jpg`}
-              alt="全体コース図"
+              src={getDisplayImage() || `/courses/${courseId}/hole_${selectedHole.hole}/full.png`}
+              alt={`${shotType}画像`}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                if (e.currentTarget.parentElement) {
+                  e.currentTarget.parentElement.innerHTML = '<div className="text-gray-500 text-center">画像が見つかりません</div>';
+                }
+              }}
               className="max-h-full max-w-full rounded-lg shadow-lg object-contain"
             />
-
-          {/* 右側: コンテンツエリア */}
           </div>
-          <div className="w-1/2 flex flex-col gap-2">
-            {/* 拡大表示セクション */}
-            <div className="flex-1 bg-gray-100 p-2 rounded-lg flex items-center justify-center">
-              <img
-                src={getDisplayImage()}
-                alt={`${shotType}セクション`}
-                className="max-h-full max-w-full rounded-lg shadow-lg object-contain"
-              />
-            </div>
 
-            {/* コース管理問題 */}
-            <div className="bg-yellow-50 p-2 rounded-lg border-2 border-yellow-300">
-              <h2 className="text-sm font-bold text-gray-800 mb-0">🎯 【コース管理問題】</h2>
-              <p className="text-xs text-gray-800 leading-none whitespace-pre-wrap font-semibold mt-1">
-                {generateProblem()}
-              </p>
-            </div>
+          {/* コース管理問題 */}
+          <div className="bg-yellow-50 p-3 rounded-lg border-2 border-yellow-300 mb-4">
+            <h2 className="text-sm font-bold text-gray-800 mb-1">🎯 【コース管理問題】</h2>
+            <p className="text-xs text-gray-800 leading-relaxed whitespace-pre-wrap font-semibold">
+              {generateProblem()}
+            </p>
+          </div>
 
-            {/* ショットタイプ選択 */}
-            <div className="flex gap-1 text-xs">
-              {(['tee', 'second', 'approach'] as ShotType[]).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setShotType(type)}
-                  className={`flex-1 py-1 px-2 rounded font-bold transition ${
-                    shotType === type
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-                  }`}
-                >
-                  {type === 'tee' ? 'TEE' : type === 'second' ? '2nd' : 'APP'}
-                </button>
-              ))}
-            </div>
+          {/* ショットタイプ選択 */}
+          <div className="grid grid-cols-3 md:grid-cols-3 gap-2 mb-4">
+            {(['tee', 'second', 'approach'] as ShotType[]).map((type) => (
+              <button
+                key={type}
+                onClick={() => setShotType(type)}
+                className={`py-2 px-2 rounded font-bold transition text-xs md:text-sm ${
+                  shotType === type
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                }`}
+              >
+                {type === 'tee' ? 'TEE' : type === 'second' ? '2nd' : 'APP'}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* クラブ選択エリア */}
-        <div className="bg-white/95 rounded-3xl shadow-2xl p-2 mb-2">
-          <h3 className="text-lg font-bold text-gray-800 mb-1 text-center">🎯 3つのクラブから選んでください</h3>
+        <div className="bg-white/95 rounded-3xl shadow-2xl p-4 mb-2">
+          <h3 className="text-lg font-bold text-gray-800 mb-2 text-center">🎯 3つのクラブから選んでください</h3>
+          {selectedClub && <div className="text-sm text-green-600 text-center mb-2">✅ {userClubs.find(c => c.id === selectedClub)?.name}を選択しました</div>}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
             {filteredClubs.map((club) => (
               <button
                 key={club.id}
@@ -275,7 +251,7 @@ export default function GameScreen() {
                     : 'border-gray-300 bg-gray-50 hover:border-green-400'
                 }`}
               >
-                <div className="text-4xl mb-0">{club.icon}</div>
+                <div className="text-3xl mb-1">{club.icon}</div>
                 <p className="text-sm font-bold text-gray-800">{club.name}</p>
                 <p className="text-xs text-blue-600">{club.yardage}y</p>
               </button>
@@ -284,7 +260,7 @@ export default function GameScreen() {
 
           <button
             onClick={handleSelectNewHole}
-            className="w-full py-1 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-bold"
+            className="w-full py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-bold"
           >
             🔄 別のホールを選ぶ
           </button>
